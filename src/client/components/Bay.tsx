@@ -1,6 +1,7 @@
 import { memo, useMemo, type KeyboardEvent } from 'react';
 import { CELLS, LOST, N, RETURNED, tracePath } from '../../shared/beam';
 import type { Lamp, Run } from '../../shared/api';
+import { fogTexture } from '../lib/fogTexture';
 import {
   ALL_PORTS,
   PAIR_COLORS,
@@ -37,7 +38,7 @@ export const markersFor = (shots: Run['shots']): Map<number, Marker> => {
   return m;
 };
 
-const pairColor = (pair: number) =>
+export const pairColor = (pair: number) =>
   PAIR_COLORS[(pair - 1) % PAIR_COLORS.length]!;
 
 const onKey = (fn: () => void) => (e: KeyboardEvent) => {
@@ -47,69 +48,85 @@ const onKey = (fn: () => void) => (e: KeyboardEvent) => {
   }
 };
 
-const Fog = memo(({ thin }: { thin: boolean }) => (
-  <g className={`fog ${thin ? 'fog-thin' : ''}`} pointerEvents="none">
-    <ellipse
-      className="drift a"
-      cx="3.2"
-      cy="3.4"
-      rx="3.6"
-      ry="1.7"
-      fill="url(#fogPuff)"
-    />
-    <ellipse
-      className="drift b"
-      cx="6.8"
-      cy="6.2"
-      rx="3.9"
-      ry="1.9"
-      fill="url(#fogPuff)"
-    />
-    <ellipse
-      className="drift c"
-      cx="4.6"
-      cy="7.6"
-      rx="3.2"
-      ry="1.4"
-      fill="url(#fogPuff)"
-    />
-    <ellipse
-      className="drift d"
-      cx="7.2"
-      cy="2.6"
-      rx="2.8"
-      ry="1.3"
-      fill="url(#fogPuff)"
-    />
-    <ellipse
-      className="drift e"
-      cx="5"
-      cy="5"
-      rx="4.2"
-      ry="2.4"
-      fill="url(#fogPuff)"
-      opacity="0.6"
-    />
-  </g>
-));
+/** inward unit direction for a lamp */
+const inward = (port: number): [number, number] => {
+  const side = Math.floor(port / N);
+  return side === 0
+    ? [0, 1]
+    : side === 1
+      ? [-1, 0]
+      : side === 2
+        ? [0, -1]
+        : [1, 0];
+};
+
+/* ------------------------------------------------------------------ */
+
+const Fog = memo(({ thin }: { thin: boolean }) => {
+  const tex = fogTexture();
+  return (
+    <g
+      className={`fog ${thin ? 'fog-thin' : ''}`}
+      pointerEvents="none"
+      clipPath="url(#water)"
+    >
+      {tex ? (
+        <>
+          <image
+            className="fog-layer l1"
+            href={tex}
+            x="-1"
+            y="-1"
+            width="12"
+            height="12"
+            preserveAspectRatio="none"
+          />
+          <image
+            className="fog-layer l2"
+            href={tex}
+            x="-1.5"
+            y="-1.5"
+            width="13"
+            height="13"
+            preserveAspectRatio="none"
+            transform="rotate(90 5 5)"
+          />
+        </>
+      ) : (
+        <ellipse cx="5" cy="5" rx="4.2" ry="2.6" fill="url(#fogPuff)" />
+      )}
+      <rect x="1" y="1" width={N} height={N} fill="url(#vignette)" />
+    </g>
+  );
+});
 Fog.displayName = 'Fog';
 
-const Rock = ({ cell }: { cell: number }) => {
+const Rock = ({ cell, delay }: { cell: number; delay: number }) => {
   const [x, y] = cellXY(cell);
   return (
-    <g transform={`translate(${x + 0.5} ${y + 0.5})`} className="rock">
-      <path
-        d="M-.36 .22 L-.3 -.12 L-.08 -.34 L.2 -.28 L.36 -.02 L.3 .26 L.02 .34 Z"
-        fill="#3a4450"
-      />
-      <path d="M-.3 -.12 L-.08 -.34 L.2 -.28 L.06 -.1 Z" fill="#5d6b78" />
-      <path
-        d="M-.42 .3 Q0 .44 .42 .3"
-        stroke="#bfe3f2"
-        strokeWidth=".05"
+    <g
+      transform={`translate(${x + 0.5} ${y + 0.5})`}
+      className="rock"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <ellipse
+        className="foam"
+        rx=".44"
+        ry=".2"
+        cy=".22"
         fill="none"
-        opacity=".55"
+        stroke="#d6eef8"
+        strokeWidth=".04"
+        strokeDasharray=".09 .07"
+        opacity=".7"
       />
+      <path
+        d="M-.34 .2 L-.31 -.06 L-.14 -.3 L.08 -.34 L.3 -.12 L.35 .12 L.2 .26 L-.12 .28 Z"
+        fill="#3b4652"
+      />
+      <path d="M-.31 -.06 L-.14 -.3 L.08 -.34 L.02 -.08 Z" fill="#6e7f8e" />
+      <path d="M.08 -.34 L.3 -.12 L.12 -.02 L.02 -.08 Z" fill="#53626f" />
+      <path d="M-.12 .28 L.2 .26 L.35 .12 L.1 .08 Z" fill="#2b343d" />
     </g>
   );
 };
@@ -118,11 +135,11 @@ const RockRing = ({ cell }: { cell: number }) => {
   const [x, y] = cellXY(cell);
   return (
     <rect
-      x={x + 0.03}
-      y={y + 0.03}
-      width=".94"
-      height=".94"
-      rx=".16"
+      x={x + 0.04}
+      y={y + 0.04}
+      width=".92"
+      height=".92"
+      rx=".18"
       fill="none"
       stroke="#a6e36b"
       strokeWidth=".06"
@@ -141,24 +158,45 @@ const Buoy = ({
 }) => {
   const [x, y] = cellXY(cell);
   return (
-    <g
-      transform={`translate(${x + 0.5} ${y + 0.52})`}
-      className={`buoy ${state}`}
-      pointerEvents="none"
-    >
-      <ellipse cx="0" cy=".2" rx=".26" ry=".07" fill="#0a1520" opacity=".5" />
-      <path d="M-.17 .16 L-.12 -.2 L.12 -.2 L.17 .16 Z" fill="#e8513d" />
-      <rect x="-.15" y="-.05" width=".3" height=".09" fill="#f6efe6" />
-      <rect x="-.025" y="-.36" width=".05" height=".17" fill="#f6efe6" />
-      <circle cx="0" cy="-.38" r=".06" fill="#ffd27a" className="buoy-light" />
+    <g transform={`translate(${x + 0.5} ${y + 0.55})`} pointerEvents="none">
+      <g className={`buoy ${state}`}>
+        <ellipse
+          className="ripple"
+          cy=".18"
+          rx=".3"
+          ry=".09"
+          fill="none"
+          stroke="#9fd0e6"
+          strokeWidth=".03"
+        />
+        <ellipse cy=".18" rx=".22" ry=".06" fill="#08121b" opacity=".55" />
+        <path
+          d="M-.2 .1 A.2 .2 0 0 1 .2 .1 L.16 .16 L-.16 .16 Z"
+          fill="#e8513d"
+        />
+        <path d="M-.19 .02 L.19 .02 L.2 .09 L-.2 .09 Z" fill="#f6efe6" />
+        <rect x="-.02" y="-.38" width=".04" height=".22" fill="#cfd8de" />
+        <circle cy="-.4" r=".07" fill="#ffd27a" className="buoy-light" />
+      </g>
       {state !== 'plain' && (
-        <g transform="translate(.24 -.26)">
-          <circle r=".15" fill={state === 'right' ? '#a6e36b' : '#ff6b5e'} />
+        <g
+          transform={
+            state === 'right'
+              ? 'translate(.3 -.5) scale(1.4)'
+              : 'translate(.25 -.28)'
+          }
+        >
+          <circle
+            r=".15"
+            fill={state === 'right' ? '#a6e36b' : '#ff6b5e'}
+            stroke="#0d1822"
+            strokeWidth=".03"
+          />
           <text
             y=".055"
             textAnchor="middle"
             fontSize=".2"
-            fontWeight="700"
+            fontWeight="800"
             fill="#0f1a24"
           >
             {state === 'right' ? '✓' : '✗'}
@@ -169,12 +207,100 @@ const Buoy = ({
   );
 };
 
+/** A small lighthouse lantern. dark = unlit, lit = burning with another keeper's oil. */
+const Lantern = ({ lit }: { lit: boolean }) => (
+  <g className="lantern">
+    <path
+      d="M-.13 -.24 L0 -.33 L.13 -.24 Z"
+      fill={lit ? '#e8513d' : '#2c4458'}
+    />
+    <rect
+      x="-.15"
+      y="-.24"
+      width=".3"
+      height=".36"
+      rx=".07"
+      fill={lit ? '#ffcf73' : '#14263a'}
+      stroke={lit ? '#fff0c9' : '#4f7189'}
+      strokeWidth=".045"
+    />
+    {lit ? (
+      <path
+        className="flame"
+        d="M0 .06 C-.07 .0 -.05 -.08 0 -.15 C.05 -.08 .07 0 0 .06 Z"
+        fill="#fff6dc"
+      />
+    ) : (
+      <line
+        x1="-.15"
+        y1="-.06"
+        x2=".15"
+        y2="-.06"
+        stroke="#4f7189"
+        strokeWidth=".03"
+      />
+    )}
+    <rect
+      x="-.18"
+      y=".12"
+      width=".36"
+      height=".07"
+      rx=".03"
+      fill={lit ? '#c98a2c' : '#2c4458'}
+    />
+  </g>
+);
+
+const MarkerBadge = ({ mk, fresh }: { mk: Marker; fresh: boolean }) => {
+  const ring =
+    mk.kind === 'pair'
+      ? pairColor(mk.pair)
+      : mk.kind === 'lost'
+        ? '#ff8a7a'
+        : '#ffd27a';
+  return (
+    <g className={`marker ${fresh ? 'pop' : ''}`}>
+      <circle r=".31" fill="#16293a" stroke={ring} strokeWidth=".06" />
+      {mk.kind === 'pair' && (
+        <text
+          y=".115"
+          textAnchor="middle"
+          fontSize=".33"
+          fontWeight="800"
+          fill={ring}
+        >
+          {mk.pair}
+        </text>
+      )}
+      {mk.kind === 'lost' && (
+        <path
+          d="M-.12 -.12 L.12 .12 M.12 -.12 L-.12 .12"
+          stroke={ring}
+          strokeWidth=".075"
+          strokeLinecap="round"
+        />
+      )}
+      {mk.kind === 'returned' && (
+        <g fill="none" stroke={ring} strokeWidth=".065" strokeLinecap="round">
+          <path d="M.13 .02 A.13 .13 0 1 1 .03 -.13" />
+          <path d="M.03 -.13 L.1 -.2 M.03 -.13 L.11 -.07" />
+        </g>
+      )}
+    </g>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+
 type Props = {
   lamps: Lamp[];
   shots: Run['shots'];
   buoys: number[];
   selected?: number | null;
+  /** reveal these rocks (fog lifts) */
   rocks?: number[] | null;
+  /** draw true beam paths through these rocks without revealing them (practice fog) */
+  pathRocks?: number[] | null;
   heat?: Record<string, number> | null;
   heatTotal?: number;
   showPaths?: boolean;
@@ -186,6 +312,8 @@ type Props = {
   checks?: Map<number, boolean> | null;
   /** show where the player's chart would send this lamp's beam */
   ghost?: number | null;
+  /** pulse this lamp to draw the eye (tutorial) */
+  beckon?: number | null;
   label: string;
 };
 
@@ -195,6 +323,7 @@ export const Bay = ({
   buoys,
   selected = null,
   rocks = null,
+  pathRocks = null,
   heat = null,
   heatTotal = 0,
   showPaths = false,
@@ -204,21 +333,23 @@ export const Bay = ({
   onCell,
   checks = null,
   ghost = null,
+  beckon = null,
   label,
 }: Props) => {
   const markers = useMemo(() => markersFor(shots), [shots]);
   const revealed = Boolean(rocks);
   const buoySet = useMemo(() => new Set(buoys), [buoys]);
   const rockSet = useMemo(() => new Set(rocks ?? []), [rocks]);
+  const traceRocks = rocks ?? pathRocks;
   const paths = useMemo(
     () =>
-      showPaths && rocks
+      (showPaths || pathRocks) && traceRocks
         ? shots.map((s) => ({
             s,
-            pts: tracePath(s.port, rocks).path.map(pointXY),
+            pts: tracePath(s.port, traceRocks).path.map(pointXY),
           }))
         : [],
-    [showPaths, rocks, shots]
+    [showPaths, pathRocks, traceRocks, shots]
   );
   const ghostPts = useMemo(
     () =>
@@ -231,34 +362,85 @@ export const Bay = ({
     () => Math.max(1, ...Object.values(heat ?? {})),
     [heat]
   );
+  const freshPorts = useMemo(() => {
+    if (!flash) return new Set<number>();
+    return new Set([
+      flash.port,
+      ...(flash.outcome >= 0 ? [flash.outcome] : []),
+    ]);
+  }, [flash]);
+  const aim = selected !== null && interactive ? selected : null;
 
   return (
     <svg
       className="bay"
-      viewBox={`0 0 ${UNITS} ${UNITS}`}
+      viewBox={`-0.15 -0.15 ${UNITS + 0.3} ${UNITS + 0.3}`}
       role="group"
       aria-label={label}
     >
       <defs>
+        <clipPath id="water">
+          <rect x="1" y="1" width={N} height={N} rx=".3" />
+        </clipPath>
         <radialGradient id="fogPuff">
           <stop offset="0" stopColor="#c9d8e2" stopOpacity=".55" />
-          <stop offset=".6" stopColor="#b8cad6" stopOpacity=".25" />
           <stop offset="1" stopColor="#b8cad6" stopOpacity="0" />
         </radialGradient>
+        <radialGradient id="vignette" cx=".5" cy=".5" r=".7">
+          <stop offset=".55" stopColor="#0b1823" stopOpacity="0" />
+          <stop offset="1" stopColor="#0b1823" stopOpacity=".55" />
+        </radialGradient>
         <radialGradient id="lampGlow">
-          <stop offset="0" stopColor="#ffd27a" stopOpacity=".9" />
+          <stop offset="0" stopColor="#ffd27a" stopOpacity=".95" />
           <stop offset=".45" stopColor="#ffb547" stopOpacity=".35" />
           <stop offset="1" stopColor="#ffb547" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#173246" />
-          <stop offset="1" stopColor="#10273a" />
+        <radialGradient id="dullGlow">
+          <stop offset="0" stopColor="#ff8a7a" stopOpacity=".8" />
+          <stop offset="1" stopColor="#ff8a7a" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="beamGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#fff4d6" />
+          <stop offset="1" stopColor="#ffb547" stopOpacity="0" />
         </linearGradient>
+        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#173448" />
+          <stop offset="1" stopColor="#0f2536" />
+        </linearGradient>
+        <pattern id="waves" width="1" height="1" patternUnits="userSpaceOnUse">
+          <path
+            d="M.12 .62 q.1 -.06 .2 0 t.2 0"
+            stroke="#2d5470"
+            strokeWidth=".025"
+            fill="none"
+            opacity=".7"
+          />
+        </pattern>
       </defs>
 
-      {/* water */}
-      <rect x="1" y="1" width={N} height={N} rx=".25" fill="url(#sea)" />
-      <g stroke="#2a4c63" strokeWidth=".02" opacity=".9" pointerEvents="none">
+      {/* shore frame + water */}
+      <rect
+        x=".55"
+        y=".55"
+        width={N + 0.9}
+        height={N + 0.9}
+        rx=".55"
+        fill="#0f1c27"
+        stroke="#1e3446"
+        strokeWidth=".04"
+      />
+      <rect x="1" y="1" width={N} height={N} rx=".3" fill="url(#sea)" />
+      <rect
+        x="1"
+        y="1"
+        width={N}
+        height={N}
+        rx=".3"
+        fill="url(#waves)"
+        className="waves"
+        pointerEvents="none"
+      />
+      <g stroke="#26475e" strokeWidth=".018" opacity=".8" pointerEvents="none">
         {Array.from({ length: N - 1 }, (_, i) => (
           <g key={i}>
             <line x1={i + 2} y1="1" x2={i + 2} y2={N + 1} />
@@ -266,6 +448,22 @@ export const Bay = ({
           </g>
         ))}
       </g>
+
+      {/* aim: the straight line this lamp would follow if the bay were empty */}
+      {aim !== null && (
+        <line
+          className="aimline"
+          x1={lampXY(aim)[0] + 0.5}
+          y1={lampXY(aim)[1] + 0.5}
+          x2={lampXY(aim)[0] + 0.5 + inward(aim)[0] * (N + 1)}
+          y2={lampXY(aim)[1] + 0.5 + inward(aim)[1] * (N + 1)}
+          stroke="#ffe3a8"
+          strokeWidth=".05"
+          strokeDasharray=".1 .14"
+          strokeLinecap="round"
+          pointerEvents="none"
+        />
+      )}
 
       {/* crowd buoys heat (after charting): only cells that drew real attention */}
       {heat &&
@@ -299,12 +497,16 @@ export const Bay = ({
           );
         })}
 
-      {revealed && !heat && [...rockSet].map((c) => <Rock key={c} cell={c} />)}
+      {revealed &&
+        !heat &&
+        [...rockSet].map((c, i) => (
+          <Rock key={c} cell={c} delay={200 + i * 160} />
+        ))}
       {revealed &&
         heat &&
         [...rockSet].map((c) => <RockRing key={c} cell={c} />)}
 
-      {/* true beam paths, drawn once the fog lifts */}
+      {/* true beam paths (fog lifted, or practice fog) */}
       {paths.map(({ s, pts }, i) => {
         const mk = markers.get(s.port);
         const color =
@@ -317,7 +519,9 @@ export const Bay = ({
           <polyline
             key={s.port}
             className="truepath"
-            style={{ animationDelay: `${300 + i * 260}ms` }}
+            style={{
+              animationDelay: `${pathRocks && !rocks ? 250 : 500 + i * 260}ms`,
+            }}
             points={pts.map(([x, y]) => `${x},${y}`).join(' ')}
             fill="none"
             stroke={color}
@@ -379,7 +583,7 @@ export const Bay = ({
       )}
 
       {/* the latest beam leaving its lamp */}
-      {flash && <FlashBeam key={flash.key} flash={flash} />}
+      {flash && <FlashBeam key={flash.key} flash={flash} markers={markers} />}
 
       {/* lamps on the shore */}
       {ALL_PORTS.map((p) => {
@@ -407,7 +611,7 @@ export const Bay = ({
         return (
           <g
             key={p}
-            className={`lamp ${state} ${isSel ? 'selected' : ''}`}
+            className={`lamp ${state} ${isSel ? 'selected' : ''} ${beckon === p ? 'beckon' : ''}`}
             transform={`translate(${x + 0.5} ${y + 0.5})`}
             role={interactive ? 'button' : undefined}
             tabIndex={interactive ? 0 : undefined}
@@ -416,70 +620,25 @@ export const Bay = ({
             onKeyDown={interactive ? onKey(() => onLamp?.(p)) : undefined}
           >
             <rect x="-.5" y="-.5" width="1" height="1" fill="transparent" />
-            {(litByOthers || isSel) && (
-              <circle r=".62" fill="url(#lampGlow)" className="glow" />
+            {(litByOthers || isSel || beckon === p) && (
+              <circle r=".66" fill="url(#lampGlow)" className="glow" />
             )}
-            {isSel && (
+            {(isSel || beckon === p) && (
               <circle
-                r=".42"
+                r=".44"
                 fill="none"
                 stroke="#ffe3a8"
                 strokeWidth=".05"
                 className="sel-ring"
               />
             )}
-            <circle
-              r=".29"
-              fill={
-                state === 'dark'
-                  ? '#1b2d3c'
-                  : state === 'lit'
-                    ? '#ffcf73'
-                    : '#22384b'
-              }
-              stroke={
-                state === 'dark'
-                  ? '#4b6b82'
-                  : state === 'lit'
-                    ? '#fff0c9'
-                    : mk?.kind === 'pair'
-                      ? pairColor(mk.pair)
-                      : '#7f9db2'
-              }
-              strokeWidth=".05"
-            />
-            {mk?.kind === 'pair' && (
-              <text
-                y=".11"
-                textAnchor="middle"
-                fontSize=".32"
-                fontWeight="700"
-                fill={pairColor(mk.pair)}
-              >
-                {mk.pair}
-              </text>
-            )}
-            {mk?.kind === 'lost' && (
-              <path
-                d="M-.12 -.12 L.12 .12 M.12 -.12 L-.12 .12"
-                stroke="#ff8a7a"
-                strokeWidth=".07"
-                strokeLinecap="round"
-              />
-            )}
-            {mk?.kind === 'returned' && (
-              <g
-                fill="none"
-                stroke="#ffd27a"
-                strokeWidth=".06"
-                strokeLinecap="round"
-              >
-                <path d="M.13 .02 A.13 .13 0 1 1 .03 -.13" />
-                <path d="M.03 -.13 L.1 -.2 M.03 -.13 L.11 -.07" />
-              </g>
+            {mk ? (
+              <MarkerBadge mk={mk} fresh={freshPorts.has(p)} />
+            ) : (
+              <Lantern lit={Boolean(litByOthers) || isSel} />
             )}
             {checks?.has(p) && (
-              <g transform="translate(.25 -.25)" className="check">
+              <g transform="translate(.26 -.26)" className="check">
                 <circle
                   r=".15"
                   fill={checks.get(p) ? '#a6e36b' : '#ff6b5e'}
@@ -500,11 +659,10 @@ export const Bay = ({
             {litByOthers && (
               <g className="fuel">
                 {Array.from({ length: lamp.fuel }, (_, i) => (
-                  <circle
+                  <path
                     key={i}
-                    cx={-0.14 + i * 0.14}
-                    cy=".42"
-                    r=".045"
+                    transform={`translate(${-0.13 + i * 0.13} .4)`}
+                    d="M0 -.06 C.035 -.02 .045 .01 .045 .025 A.045 .045 0 0 1 -.045 .025 C-.045 .01 -.035 -.02 0 -.06 Z"
                     fill="#ffd27a"
                   />
                 ))}
@@ -517,45 +675,102 @@ export const Bay = ({
   );
 };
 
-/** A short burst of light into the fog — the true path stays secret until the fog lifts. */
-const FlashBeam = ({ flash }: { flash: Flash }) => {
+/**
+ * The firing moment: the lamp charges, the beam plunges into the fog and the fog
+ * ripples, then the light either bursts out of another lamp, dies on a rock, or
+ * snaps back. The true path inside the fog stays secret.
+ */
+const FlashBeam = ({
+  flash,
+  markers,
+}: {
+  flash: Flash;
+  markers: Map<number, Marker>;
+}) => {
   const [x, y] = lampXY(flash.port);
-  const side = Math.floor(flash.port / N);
-  const [dx, dy] =
-    side === 0 ? [0, 1] : side === 1 ? [-1, 0] : side === 2 ? [0, -1] : [1, 0];
-  const len = flash.outcome === RETURNED ? 1.2 : 2.6;
+  const [dx, dy] = inward(flash.port);
   const x0 = x + 0.5;
   const y0 = y + 0.5;
+  const len = flash.outcome === RETURNED ? 1.4 : 2.8;
+  const x1 = x0 + dx * len;
+  const y1 = y0 + dy * len;
   const exit = flash.outcome >= 0 ? lampXY(flash.outcome) : null;
+  const mk = markers.get(flash.port);
+  const color = mk?.kind === 'pair' ? pairColor(mk.pair) : '#ffd27a';
+  const [ex, ey] = exit ? [exit[0] + 0.5, exit[1] + 0.5] : [0, 0];
+  const [odx, ody] = exit ? inward(flash.outcome).map((v) => -v) : [0, 0];
   return (
-    <g pointerEvents="none">
+    <g pointerEvents="none" className="flashbeam">
+      <circle
+        className="charge"
+        cx={x0}
+        cy={y0}
+        r=".55"
+        fill="url(#lampGlow)"
+      />
       <line
-        className={`flash ${flash.outcome === RETURNED ? 'back' : ''}`}
+        className={`plunge ${flash.outcome === RETURNED ? 'back' : ''} ${flash.outcome === LOST ? 'dies' : ''}`}
         x1={x0}
         y1={y0}
-        x2={x0 + dx * len}
-        y2={y0 + dy * len}
-        stroke="#ffe3a8"
-        strokeWidth=".16"
+        x2={x1}
+        y2={y1}
+        stroke="#fff0c9"
+        strokeWidth=".2"
         strokeLinecap="round"
         pathLength={1}
       />
+      <circle
+        className="fog-ripple"
+        cx={x0 + dx * 1.1}
+        cy={y0 + dy * 1.1}
+        r=".5"
+        fill="none"
+        stroke="#e6f1f7"
+        strokeWidth=".05"
+      />
       {exit && (
-        <circle
-          className="arrive"
-          cx={exit[0] + 0.5}
-          cy={exit[1] + 0.5}
-          r=".5"
-          fill="url(#lampGlow)"
-        />
+        <>
+          <circle
+            className="burst"
+            cx={ex}
+            cy={ey}
+            r=".75"
+            fill="url(#lampGlow)"
+          />
+          <circle
+            className="burst-ring"
+            cx={ex}
+            cy={ey}
+            r=".45"
+            fill="none"
+            stroke={color}
+            strokeWidth=".07"
+          />
+          <line
+            className="escape"
+            x1={ex}
+            y1={ey}
+            x2={ex + odx! * 1.1}
+            y2={ey + ody! * 1.1}
+            stroke={color}
+            strokeWidth=".14"
+            strokeLinecap="round"
+            pathLength={1}
+          />
+        </>
       )}
       {flash.outcome === LOST && (
+        <circle className="thud" cx={x1} cy={y1} r=".6" fill="url(#dullGlow)" />
+      )}
+      {flash.outcome === RETURNED && (
         <circle
-          className="swallow"
-          cx={x0 + dx * len}
-          cy={y0 + dy * len}
-          r=".35"
-          fill="#ff8a7a"
+          className="bounce-ring"
+          cx={x0}
+          cy={y0}
+          r=".45"
+          fill="none"
+          stroke="#ffd27a"
+          strokeWidth=".07"
         />
       )}
     </g>

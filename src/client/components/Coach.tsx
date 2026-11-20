@@ -25,7 +25,13 @@ const rock = (x: number, y: number) => (
   />
 );
 
-export const Coach = ({ onClose }: { onClose: () => void }) => (
+export const Coach = ({
+  onClose,
+  onPractice,
+}: {
+  onClose: () => void;
+  onPractice: () => void;
+}) => (
   <div
     className="coach"
     role="dialog"
@@ -89,9 +95,14 @@ export const Coach = ({ onClose }: { onClose: () => void }) => (
         Your lamp costs <b>1</b>. Lamps other keepers lit glow amber — borrow
         their beam for <b>½</b> and they earn the credit.
       </p>
-      <button className="btn btn-lamp" onClick={onClose} autoFocus>
-        Light the first lamp
-      </button>
+      <div className="actions">
+        <button className="btn btn-ghost" onClick={onPractice}>
+          Practice fog
+        </button>
+        <button className="btn btn-lamp" onClick={onClose} autoFocus>
+          Back to the bay
+        </button>
+      </div>
     </div>
   </div>
 );

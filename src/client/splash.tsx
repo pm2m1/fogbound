@@ -61,7 +61,7 @@ const Splash = ({ data }: { data: InitResponse }) => {
 
   return (
     <main className="splash">
-      <header>
+      <header className="splash-head">
         <h1 className="wordmark">Fogbound</h1>
         <div className="sub">
           #{data.number} · {shortDateLabel(data.puzzle.day)} · {data.puzzle.k}{' '}
@@ -69,54 +69,58 @@ const Splash = ({ data }: { data: InitResponse }) => {
         </div>
       </header>
 
-      <BoardFrame max={290}>
-        {(size) => (
-          <div style={{ width: size, height: size }}>
-            <Bay
-              lamps={data.lamps}
-              shots={result ? result.shots : data.run.shots}
-              buoys={result ? result.buoys : []}
-              rocks={result ? result.rocks : null}
-              label="Tonight's bay: lamps on the shore, rocks hidden in the fog"
-            />
-          </div>
-        )}
-      </BoardFrame>
-
-      <News data={data} />
-
-      <div className="row">
-        {stats.players > 0 && (
-          <span className="chip">
-            {stats.players.toLocaleString()} keepers · {perfectPct}% charted it
-            all
-          </span>
-        )}
-        {me && me.streak > 0 && (
-          <span className="chip">🔥 {me.streak}-day streak</span>
-        )}
-        {result && (
-          <span className="chip">
-            You: {fmtHalf(result.scoreHalf)} · par {data.puzzle.par}
-          </span>
-        )}
+      <div className="splash-board">
+        <BoardFrame max={420}>
+          {(size) => (
+            <div style={{ width: size, height: size }}>
+              <Bay
+                lamps={data.lamps}
+                shots={result ? result.shots : data.run.shots}
+                buoys={result ? result.buoys : []}
+                rocks={result ? result.rocks : null}
+                label="Tonight's bay: lamps on the shore, rocks hidden in the fog"
+              />
+            </div>
+          )}
+        </BoardFrame>
       </div>
 
-      <div className="row">
-        {!data.isToday && data.todayPostId && (
-          <button className="btn btn-ghost" onClick={openToday}>
-            Tonight’s fog →
+      <div className="splash-info">
+        <News data={data} />
+
+        <div className="row">
+          {stats.players > 0 && (
+            <span className="chip">
+              {stats.players.toLocaleString()} keepers · {perfectPct}% charted
+              it all
+            </span>
+          )}
+          {me && me.streak > 0 && (
+            <span className="chip">🔥 {me.streak}-day streak</span>
+          )}
+          {result && (
+            <span className="chip">
+              You: {fmtHalf(result.scoreHalf)} · par {data.puzzle.par}
+            </span>
+          )}
+        </div>
+
+        <div className="row">
+          {!data.isToday && data.todayPostId && (
+            <button className="btn btn-ghost" onClick={openToday}>
+              Tonight’s fog →
+            </button>
+          )}
+          <button className="btn btn-lamp big" onClick={open}>
+            {result
+              ? 'See the chart'
+              : data.run.shots.length
+                ? 'Back to your lamps'
+                : data.isToday
+                  ? 'Light a lamp'
+                  : 'Practise this night'}
           </button>
-        )}
-        <button className="btn btn-lamp big" onClick={open}>
-          {result
-            ? 'See the chart'
-            : data.run.shots.length
-              ? 'Back to your lamps'
-              : data.isToday
-                ? 'Light a lamp'
-                : 'Practise this night'}
-        </button>
+        </div>
       </div>
     </main>
   );

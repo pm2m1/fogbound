@@ -32,12 +32,13 @@ import { Bay, markersFor, type Flash } from './components/Bay';
 import { BeamLog } from './components/BeamLog';
 import { BoardFrame } from './components/BoardFrame';
 import { Coach } from './components/Coach';
+import { Tutorial } from './components/Tutorial';
 import { ResultCard } from './components/ResultCard';
 import { ApiError, api } from './lib/api';
 import { fmtCount, lampName, lampShort } from './lib/geometry';
 import { askLogin, journey, onReddit, toast } from './lib/platform';
 
-const SEEN_KEY = 'fogbound.coach.v1';
+const SEEN_KEY = 'fogbound.practice.v1';
 const readSeen = (): boolean => {
   try {
     return localStorage.getItem(SEEN_KEY) === '1';
@@ -128,7 +129,10 @@ const Game = ({ data }: { data: InitResponse }) => {
   );
   const [stats, setStats] = useState<DayStats>(data.stats);
   const [me, setMe] = useState<MyProfile | null>(data.me);
-  const [coach, setCoach] = useState(() => !readSeen() && !data.result);
+  const [coach, setCoach] = useState(false);
+  const [practice, setPractice] = useState(
+    () => !readSeen() && !data.result && data.run.shots.length === 0
+  );
   const [view, setView] = useState<'beams' | 'crowd' | 'log'>('beams');
   const [charts, setCharts] = useState<number | null>(() =>
     data.run.shots.length ? null : totalCharts(puzzle.k)
@@ -245,6 +249,11 @@ const Game = ({ data }: { data: InitResponse }) => {
       setSelected(null);
       flashKey.current++;
       setFlash({ port, outcome: r.shot.outcome, key: flashKey.current });
+      try {
+        navigator.vibrate?.(r.shot.outcome === LOST ? [18, 60, 18] : 12);
+      } catch {
+        /* no haptics here */
+      }
       const pair = markersFor(nextShots).get(port)?.pair ?? 0;
       const prefix = r.shot.borrowed ? `Borrowed from u/${r.shot.from}. ` : '';
       setNote(prefix + explain(port, r.shot.outcome, pair));
@@ -300,13 +309,13 @@ const Game = ({ data }: { data: InitResponse }) => {
     if (checks) {
       const n = checks.size;
       if (explained === n && charts === 1)
-        return 'Your chart explains every beam — and it’s the only chart that does. Chart the fog!';
+        return 'Your buoys explain every beam — and it’s the only layout that does. Chart the fog!';
       if (explained === n)
-        return `Your chart explains every beam, but ${charts === null ? 'other' : fmtCount(charts)} charts do too. Gamble, or light another lamp?`;
-      return `Your chart explains ${explained} of ${n} beams. Tap a ✗ lamp to see where your chart sends it.`;
+        return `Your buoys explain every beam, but ${charts === null ? 'other' : fmtCount(charts)} rock layouts still do too. Gamble, or light another lamp?`;
+      return `Your buoys explain ${explained} of ${n} beams. Tap a ✗ lamp to see where your buoys would send it.`;
     }
     if (charts === 1)
-      return 'Only one chart fits your beams now. Find it — drop your buoys.';
+      return 'Only one rock layout fits your beams now. Find it — drop your buoys.';
     return buoys.length
       ? 'Keep reading beams, or move buoys until you’re sure.'
       : 'Tap the water to drop a buoy where you think a rock hides.';
@@ -317,8 +326,15 @@ const Game = ({ data }: { data: InitResponse }) => {
     setCoach(false);
   };
 
+  const finishPractice = () => {
+    markSeen();
+    setPractice(false);
+  };
+
   const done = phase.kind === 'done' ? phase.result : null;
   const totalBuoyers = stats.players + (done && !done.ranked ? 1 : 0);
+
+  if (practice) return <Tutorial onDone={finishPractice} />;
 
   return (
     <main className={`game ${done ? 'is-done' : ''}`}>
@@ -365,7 +381,7 @@ const Game = ({ data }: { data: InitResponse }) => {
         </div>
       )}
 
-      <BoardFrame max={460} reserve={done ? 0 : 56}>
+      <BoardFrame max={640} reserve={done ? 0 : 56}>
         {(size) => (
           <div className="stage" style={{ width: size }}>
             {done && view === 'log' ? (
@@ -409,26 +425,26 @@ const Game = ({ data }: { data: InitResponse }) => {
           <div className="dock">
             <div className="meters" aria-label="Your night so far">
               <span className="meter">
-                <b>{fmtHalf(costHalf)}</b> / par {puzzle.par}
+                Cost <b>{fmtHalf(costHalf)}</b> · par {puzzle.par}
               </span>
               {ranked && (
                 <span className="meter">
-                  <LampIcon /> {borrowsLeft} left
+                  <LampIcon /> {borrowsLeft} cheap borrows
                 </span>
               )}
               <span
                 className={`meter fogm ${charts === 1 ? 'clear' : ''}`}
-                title="Rock charts that still fit your beams"
+                title="Rock layouts that still fit your beams"
               >
                 <FogIcon />{' '}
                 {charts === null
                   ? '…'
                   : charts === 1
-                    ? '1 chart fits'
-                    : `${fmtCount(charts)} fit`}
+                    ? '1 layout left'
+                    : `${fmtCount(charts)} layouts`}
               </span>
               <span className="meter">
-                ⚑ {buoys.length}/{puzzle.k}
+                Buoys {buoys.length}/{puzzle.k}
               </span>
             </div>
             {selected !== null ? (
@@ -486,7 +502,12 @@ const Game = ({ data }: { data: InitResponse }) => {
         />
       )}
 
-      {coach && <Coach onClose={closeCoach} />}
+      {coach && (
+        <Coach
+          onClose={closeCoach}
+          onPractice={() => (closeCoach(), setPractice(true))}
+        />
+      )}
     </main>
   );
 };
