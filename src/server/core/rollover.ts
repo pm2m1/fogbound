@@ -69,13 +69,13 @@ export const ensurePuzzle = async (day: number): Promise<Puzzle> => {
 
 const howToPlay = (p: Puzzle): string =>
   [
-    `**How to play — ${p.k} rocks are hidden in the fog. Find them using as few beams as you can.**`,
+    `**How to play:** ${p.k} rocks hide in the fog. Find them with as few beams as you can.`,
     '',
     '1. Tap a lamp on the shore, then **Fire**. A beam goes straight in.',
     '2. Read what the lamp shows:',
-    '    - **✕** — the beam hit a rock. Usually the rock is on that straight line (unless the beam bent first).',
-    '    - **Matching numbers** (1 and 1) — it went in at one and came out at the other. A rock just ahead and to one side turned it 90° away.',
-    '    - **↺** — it came straight back (squeezed between two rocks, or a rock right next to the shore).',
+    '    - **✕**: the beam hit a rock, usually in that line.',
+    '    - **Matching numbers**: the beam went in at one and out at the other. A rock diagonally ahead bends it.',
+    '    - **↺**: it came straight back.',
     '3. The fog burns off every square your beams prove is empty. The rocks hide in the fog that is left.',
     `4. Tap the water to drop ${p.k} buoys where the rocks are, then **Chart the fog**.`,
     '',
@@ -128,10 +128,10 @@ export const ensureDailyPost = async (day: number): Promise<string> => {
         );
         const bright = recap.brightest
           ? `Brightest lamp: **u/${recap.brightest.name}**, whose beams guided ${recap.brightest.guided} players.`
-          : 'Nobody borrowed a beam yesterday — light one early today.';
+          : 'Nobody borrowed a beam yesterday. Light one early today.';
         await reddit.submitComment({
           id: prevPost,
-          text: `**The fog lifted.** ${recap.players} players · ${pct}% found every rock.\n\n${bright}\n\nTonight's fog is rolling in — new post is up.`,
+          text: `**The fog lifted.** ${recap.players} players · ${pct}% found every rock.\n\n${bright}\n\nTonight's fog is rolling in. New post is up.`,
         });
       }
     }

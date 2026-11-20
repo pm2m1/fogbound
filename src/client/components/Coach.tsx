@@ -94,7 +94,7 @@ export const Coach = ({
         </Mini>
       </div>
       <p className="coach-econ">
-        Your lamp costs <b>1</b>. Lamps other players lit glow amber — borrow
+        Your lamp costs <b>1</b>. Lamps other players lit glow amber. Borrow
         their beam for <b>½</b> and they earn the credit.
       </p>
       <div className="actions">

@@ -1248,3 +1248,16 @@ button {
 .beamlog-explain {
   text-align: left;
 }
+
+.splash .tagline {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text);
+  opacity: 0.85;
+}
+.splash .credit {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}

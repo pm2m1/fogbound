@@ -80,12 +80,12 @@ export const ResultCard = ({
       const r = await api.share();
       if (r.posted) toast('Posted to the thread');
       else if (await copy(r.text))
-        toast('Result copied — paste it in the comments');
+        toast('Result copied. Paste it in the comments.');
       else toast('Already shared today');
       setShared('done');
     } catch {
       setShared('idle');
-      toast('Couldn’t post — try again');
+      toast('Could not post. Try again.');
     }
   };
 
@@ -139,8 +139,7 @@ export const ResultCard = ({
         </div>
       </div>
       <p className="result-explain">
-        Score = 1 per beam (½ if borrowed) + 5 per wrong buoy. Par is what a
-        sharp player needs. Lower is better.
+        1 per beam (½ if borrowed), +5 per wrong buoy. Lower is better.
       </p>
 
       <p className="result-line">
@@ -152,8 +151,7 @@ export const ResultCard = ({
       </p>
       {result.ranked && result.guidedToday === 0 && (
         <p className="result-tip">
-          Light a lamp early tomorrow — anyone who borrows it is credited to
-          you.
+          Light a lamp early tomorrow. Anyone who borrows it is credited to you.
         </p>
       )}
 

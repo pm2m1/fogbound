@@ -36,7 +36,7 @@ import { Tutorial } from './components/Tutorial';
 import { FreePlay } from './components/FreePlay';
 import { ResultCard } from './components/ResultCard';
 import { ApiError, api } from './lib/api';
-import { fmtCount, lampName, lampShort } from './lib/geometry';
+import { fmtCount, lampShort } from './lib/geometry';
 import { askLogin, journey, onReddit, toast } from './lib/platform';
 
 const SEEN_KEY = 'fogbound.practice.v1';
@@ -96,19 +96,17 @@ const opposite = (port: number) => {
 
 const outcomeText = (o: number) =>
   o === LOST
-    ? 'loses it on a rock'
+    ? 'hits a rock'
     : o === RETURNED
-      ? 'throws it straight back'
-      : `brings it out at ${lampShort(o)}`;
+      ? 'comes back'
+      : `exits at ${lampShort(o)}`;
 
 const explain = (port: number, outcome: number, pair: number): string => {
-  if (outcome === LOST)
-    return `Lost. A rock sits head-on somewhere along that beam’s path.`;
-  if (outcome === RETURNED)
-    return `It came straight back: a rock squeezed it, or one sits right by that lamp.`;
+  if (outcome === LOST) return 'Hit a rock.';
+  if (outcome === RETURNED) return 'It came straight back.';
   if (outcome === opposite(port))
-    return `Beam ${pair} sailed straight across — or bent and bent back. That line looks clear.`;
-  return `Beam ${pair} bent its way out at ${lampName(outcome)}. Rocks steered it.`;
+    return `Beam ${pair} came out straight across.`;
+  return `Beam ${pair} bent and came out at ${lampShort(outcome)}.`;
 };
 
 type Phase = { kind: 'play' } | { kind: 'done'; result: Result };
@@ -201,8 +199,8 @@ const Game = ({ data }: { data: InitResponse }) => {
         const hyp = trace(p, buoys);
         setNote(
           hyp === fired.outcome
-            ? `Your chart explains ${lampShort(p)}: it ${outcomeText(hyp)}.`
-            : `Your chart ${outcomeText(hyp)} — but the real beam from ${lampShort(p)} ${outcomeText(fired.outcome)}.`
+            ? `Your buoys explain ${lampShort(p)}.`
+            : `With your buoys it ${outcomeText(hyp)}. Really it ${outcomeText(fired.outcome)}.`
         );
         return;
       }
@@ -211,8 +209,8 @@ const Game = ({ data }: { data: InitResponse }) => {
         setSelected(null);
         setNote(
           mk.kind === 'pair'
-            ? `Already known: beam ${mk.pair} links this lamp with ${lampName(mk.partner!)}.`
-            : 'You already know what this lamp does.'
+            ? `Already fired: beam ${mk.pair} links to ${lampShort(mk.partner!)}.`
+            : 'Already fired.'
         );
         return;
       }
@@ -231,7 +229,7 @@ const Game = ({ data }: { data: InitResponse }) => {
       setBuoys((b) => {
         if (b.includes(c)) return b.filter((x) => x !== c);
         if (b.length >= puzzle.k) {
-          setNote(`All ${puzzle.k} buoys are out — tap one to lift it.`);
+          setNote(`All ${puzzle.k} buoys placed. Tap one to lift it.`);
           return b;
         }
         const next = [...b, c];
@@ -249,6 +247,14 @@ const Game = ({ data }: { data: InitResponse }) => {
     try {
       const r = mode === 'fire' ? await api.fire(port) : await api.borrow(port);
       journey.start();
+      journey.interaction(
+        'beam',
+        r.shot.outcome === LOST
+          ? 'hit'
+          : r.shot.outcome === RETURNED
+            ? 'back'
+            : 'exit'
+      );
       if (mode === 'borrow') journey.interaction('borrow', r.shot.from);
       const nextShots = [...shots, r.shot];
       setShots(nextShots);
@@ -267,7 +273,8 @@ const Game = ({ data }: { data: InitResponse }) => {
       const prefix = r.shot.borrowed ? `Borrowed from u/${r.shot.from}. ` : '';
       setNote(prefix + explain(port, r.shot.outcome, pair));
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'Lost signal — try again';
+      const msg =
+        e instanceof ApiError ? e.message : 'Connection lost. Try again.';
       setNote(msg);
       if (e instanceof ApiError && /burned out|dark/.test(msg)) {
         setLamps((ls) =>
@@ -284,15 +291,17 @@ const Game = ({ data }: { data: InitResponse }) => {
     const bad = checks ? checks.size - explained : 0;
     if (bad > 0 && armedFor !== buoys.join()) {
       setArmedFor(buoys.join());
+      journey.interaction('chart-warning', 'contradiction');
       setNote(
-        `Careful: your buoys contradict ${bad} beam${bad > 1 ? 's' : ''} (the lamps with a red badge). Tap one to see why, or chart anyway.`
+        `Your buoys break ${bad} beam${bad > 1 ? 's' : ''} (red badges). Tap one to see why.`
       );
       return;
     }
     if (charts !== null && charts > 2 && armedFor !== buoys.join()) {
       setArmedFor(buoys.join());
+      journey.interaction('chart-warning', 'guess');
       setNote(
-        `${fmtCount(charts)} rock layouts still fit your beams, so this is a guess. A wrong buoy costs 5, a beam only 1 — fire more lamps, or chart anyway.`
+        `${fmtCount(charts)} layouts still fit, so this is a guess. Wrong buoys cost 5 each.`
       );
       return;
     }
@@ -316,7 +325,9 @@ const Game = ({ data }: { data: InitResponse }) => {
       setSelected(null);
       setNote(null);
     } catch (e) {
-      setNote(e instanceof ApiError ? e.message : 'Lost signal — try again');
+      setNote(
+        e instanceof ApiError ? e.message : 'Connection lost. Try again.'
+      );
     } finally {
       setBusy(false);
     }
@@ -326,24 +337,22 @@ const Game = ({ data }: { data: InitResponse }) => {
     if (note) return note;
     if (selected !== null) {
       if (canBorrow)
-        return `u/${selLamp!.by} lit this lamp. Borrow their beam for ½, or fire your own for 1.`;
-      return `${lampName(selected)}: fire to send a beam into the fog.`;
+        return `u/${selLamp!.by} lit this. Borrow for ½ or fire your own for 1.`;
+      return 'Tap Fire to send the beam.';
     }
-    if (shots.length === 0)
-      return 'Tap a lamp on the shore to aim a beam into the fog.';
+    if (shots.length === 0) return 'Tap a lamp to aim a beam into the fog.';
     if (checks) {
       const n = checks.size;
       if (explained === n && charts === 1)
-        return 'Your buoys explain every beam — and it’s the only layout that does. Chart the fog!';
+        return 'Your buoys fit every beam. Chart the fog!';
       if (explained === n)
-        return `Your buoys explain every beam, but ${charts === null ? 'other' : fmtCount(charts)} rock layouts still do too. Gamble, or light another lamp?`;
-      return `Your buoys explain ${explained} of ${n} beams. Tap a ✗ lamp to see where your buoys would send it.`;
+        return `Your buoys fit, but so do ${charts === null ? 'other' : fmtCount(charts)} layouts. Fire more?`;
+      return `Your buoys fit ${explained} of ${n} beams. Tap a red badge to see why.`;
     }
-    if (charts === 1)
-      return 'Only one rock layout fits your beams now. Find it — drop your buoys.';
+    if (charts === 1) return 'Only one layout fits now. Drop your buoys.';
     return buoys.length
-      ? 'Keep reading beams, or move buoys until you’re sure.'
-      : 'Fog burns off squares your beams prove empty. The rocks hide in what’s left — fire more, or tap the water to drop a buoy.';
+      ? 'Fire more, or move buoys until you are sure.'
+      : 'Fog clears where rocks can’t be. Fire more, or tap the water to drop a buoy.';
   })();
 
   const closeCoach = () => {

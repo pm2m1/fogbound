@@ -29,19 +29,17 @@ const STEPS: Step[] = [
     rocks: [ROCK_A],
     visible: true,
     lamps: [4],
-    ask: 'This is a rock. In the real game it hides in fog. Tap the glowing lamp to shine at it.',
-    after: [
-      'The beam hit the rock and died — the lamp now shows ✕. Rule 1: ✕ means the beam hit a rock — usually one on that straight line.',
-    ],
+    ask: 'This is a rock. In the game it hides in fog. Tap the glowing lamp.',
+    after: ['Rule 1: ✕ means the beam hit a rock, usually in that line.'],
   },
   {
     title: 'Rule 2 of 3',
     rocks: [ROCK_A],
     visible: true,
     lamps: [3],
-    ask: 'Now the lamp next to it. Watch the beam as it passes the rock.',
+    ask: 'Now tap the lamp next to it.',
     after: [
-      'It turned away from the rock and came out on the left. Rule 2: a rock diagonally ahead bends the beam 90° away. Matching numbers mark where it went in and out.',
+      'Rule 2: a rock diagonally ahead bends the beam away. Matching numbers show in and out.',
     ],
   },
   {
@@ -49,20 +47,18 @@ const STEPS: Step[] = [
     rocks: [ROCK_A, ROCK_B],
     visible: true,
     lamps: [5],
-    ask: 'Two rocks now. Shine the glowing lamp between them.',
-    after: [
-      'Squeezed between two rocks, it bounced straight back. Rule 3: ↺ means it came back.',
-    ],
+    ask: 'Two rocks. Shine between them.',
+    after: ['Rule 3: squeezed between rocks, it comes back. That is ↺.'],
   },
   {
     title: 'Test',
     rocks: [HIDDEN],
     visible: false,
     lamps: [2, 3 * 8 + 5],
-    ask: 'Your turn. One rock is hidden in the fog. Fire the glowing lamp.',
+    ask: 'Your turn. One rock is hidden. Tap the glowing lamp.',
     after: [
-      '✕ — so the rock is somewhere in that column. Now fire the next glowing lamp.',
-      '✕ again — so it’s somewhere in that row too.',
+      '✕: the rock is in that column. Tap the next lamp.',
+      '✕ again: it is in that row too.',
     ],
   },
 ];
@@ -130,17 +126,15 @@ export const Tutorial = ({
     if (!placing || solved) return;
     setBuoys([c]);
     setNote(
-      c === HIDDEN
-        ? null
-        : 'Not there. Find the cell where the top ✕ column meets the left ✕ row.'
+      c === HIDDEN ? null : 'Not there. Try where the two ✕ lines cross.'
     );
   };
 
   const hint = (() => {
     if (solved)
-      return 'Found it! In real games the fog also clears from squares your beams prove empty. Fewer beams = better score.';
+      return 'Found it! In the game, fog clears where rocks can’t be. Fewer beams, better score.';
     if (note) return note;
-    if (placing) return 'Tap the water where the two ✕ lines cross.';
+    if (placing) return 'Tap where the two ✕ lines cross.';
     return step.ask;
   })();
 

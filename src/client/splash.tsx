@@ -8,7 +8,10 @@ import { fmtHalf } from '../shared/puzzle';
 import { Bay } from './components/Bay';
 import { BoardFrame } from './components/BoardFrame';
 import { api } from './lib/api';
-import { expand, goTo, onReddit, subredditName } from './lib/platform';
+import { expand, goTo, journey, onReddit, subredditName } from './lib/platform';
+
+/** maker credit on the splash; the Reddit account that built the game */
+const CREDIT = 'u/wparthg';
 
 const News = ({ data }: { data: InitResponse }) => {
   const lit = data.lamps.filter((l) => l.by !== null).length;
@@ -31,7 +34,7 @@ const News = ({ data }: { data: InitResponse }) => {
   }
   return (
     <p className="news">
-      The shore is dark. <b>Light the first lamp</b> — anyone who borrows it is
+      The shore is dark. <b>Light the first lamp</b>. Anyone who borrows it is
       credited to you.
     </p>
   );
@@ -43,7 +46,10 @@ const Splash = ({ data }: { data: InitResponse }) => {
     ? Math.round((100 * stats.perfect) / stats.players)
     : 0;
 
+  useEffect(() => journey.ready(), []);
+
   const open = (e: MouseEvent) => {
+    journey.interaction('open-game', result ? 'result' : 'play');
     if (!onReddit()) {
       window.location.href = `game.html${window.location.search}`;
       return;
@@ -67,6 +73,9 @@ const Splash = ({ data }: { data: InitResponse }) => {
           #{data.number} · {shortDateLabel(data.puzzle.day)} · {data.puzzle.k}{' '}
           rocks in the fog
         </div>
+        <p className="tagline">
+          Shine light into the fog to find the hidden rocks.
+        </p>
       </header>
 
       <div className="splash-board">
@@ -113,14 +122,15 @@ const Splash = ({ data }: { data: InitResponse }) => {
           )}
           <button className="btn btn-lamp big" onClick={open}>
             {result
-              ? 'See the chart'
+              ? 'See your result'
               : data.run.shots.length
-                ? 'Back to your lamps'
+                ? 'Continue'
                 : data.isToday
-                  ? 'Light a lamp'
-                  : 'Practise this night'}
+                  ? 'Play'
+                  : 'Play (practice)'}
           </button>
         </div>
+        <p className="credit">A daily puzzle by {CREDIT}</p>
       </div>
     </main>
   );

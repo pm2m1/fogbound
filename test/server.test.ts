@@ -75,7 +75,7 @@ describe('Fogbound server', () => {
     expect(todaysPost().title).toMatch(/^Fogbound #1 · Monday: 3 rocks/);
     expect(
       comments.some(
-        (c) => c.distinguished && c.body.includes('3 rocks are hidden')
+        (c) => c.distinguished && c.body.includes('3 rocks hide in the fog')
       )
     ).toBe(true);
 

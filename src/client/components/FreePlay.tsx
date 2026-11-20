@@ -28,10 +28,10 @@ const DARK: Lamp[] = Array.from({ length: PORTS }, (_, p) => ({
 
 const outcomeText = (o: number) =>
   o === LOST
-    ? 'Lost on a rock.'
+    ? 'Hit a rock.'
     : o === RETURNED
-      ? 'It came straight back.'
-      : `It came out at ${lampShort(o)}.`;
+      ? 'Came straight back.'
+      : `Came out at ${lampShort(o)}.`;
 
 /**
  * Unlimited practice fogs: unranked, played entirely on the device. They never touch
@@ -78,7 +78,7 @@ export const FreePlay = ({
           setFog(f);
           journey.interaction('practice-fog');
         })
-        .catch(() => setNote('The fog would not roll in — try again')),
+        .catch(() => setNote('Could not load the fog. Try again.')),
     []
   );
 
@@ -152,7 +152,7 @@ export const FreePlay = ({
     }
     setGhost(null);
     if (markers.has(p)) {
-      setNote('You already know what this lamp does.');
+      setNote('Already fired.');
       return;
     }
     setNote(null);
@@ -166,6 +166,7 @@ export const FreePlay = ({
     key.current++;
     setFlash({ port: selected, outcome, key: key.current });
     setNote(outcomeText(outcome));
+    journey.interaction('practice-beam', guidedOn ? 'guided' : 'free');
     setSelected(null);
     try {
       navigator.vibrate?.(outcome === LOST ? [18, 60, 18] : 12);
@@ -193,14 +194,14 @@ export const FreePlay = ({
     if (bad > 0 && armedFor !== buoys.join()) {
       setArmedFor(buoys.join());
       setNote(
-        `Careful: your buoys contradict ${bad} beam${bad > 1 ? 's' : ''} (the lamps with a red badge). Tap one to see why, or chart anyway.`
+        `Your buoys break ${bad} beam${bad > 1 ? 's' : ''} (red badges). Tap one to see why.`
       );
       return;
     }
     if (charts !== null && charts > 2 && armedFor !== buoys.join()) {
       setArmedFor(buoys.join());
       setNote(
-        `${fmtCount(charts)} rock layouts still fit your beams, so this is a guess. A wrong buoy costs 5, a beam only 1 — fire more lamps, or chart anyway.`
+        `${fmtCount(charts)} layouts still fit, so this is a guess. Wrong buoys cost 5 each.`
       );
       return;
     }
@@ -233,8 +234,8 @@ export const FreePlay = ({
   const hint = (() => {
     if (done)
       return wrong === 0
-        ? `Every rock charted for ${fmtHalf(costHalf)} — par was ${fog.par}.${costHalf > (fog.par + 2) * 2 ? ' Open the beam log to see which beams were wasted.' : ''}`
-        : `${wrong} buoy${wrong > 1 ? 's' : ''} on open water. The fog has lifted — see how the beams really ran.`;
+        ? `All rocks found. Score ${fmtHalf(costHalf)}, par ${fog.par}.${costHalf > (fog.par + 2) * 2 ? ' See the beam log.' : ''}`
+        : `${wrong} buoy${wrong > 1 ? 's' : ''} missed. Here is where the beams really went.`;
     if (
       guidedOn &&
       selected === null &&
@@ -244,24 +245,23 @@ export const FreePlay = ({
     )
       return `${note} ${
         shots.length === GUIDED_BEAMS
-          ? 'That was the last guided path.'
-          : `You can see its real path (${shots.length}/${GUIDED_BEAMS}).`
+          ? 'Last guided path.'
+          : `Real path shown (${shots.length}/${GUIDED_BEAMS}).`
       }`;
     if (note) return note;
-    if (selected !== null)
-      return `${lampShort(selected)}: fire to send a beam into the fog.`;
+    if (selected !== null) return 'Tap Fire to send the beam.';
     if (checks) {
       if (explained === checks.size && charts === 1)
-        return 'Your buoys explain every beam — and only one layout does. Chart it!';
+        return 'Your buoys fit every beam. Chart the fog!';
       if (explained === checks.size)
-        return 'Your buoys explain every beam, but other layouts do too. Gamble, or fire another lamp?';
-      return `Your buoys explain ${explained} of ${checks.size} beams. Tap a ✗ lamp to compare.`;
+        return `Your buoys fit, but so do ${charts === null ? 'other' : fmtCount(charts)} layouts. Fire more?`;
+      return `Your buoys fit ${explained} of ${checks.size} beams. Tap a red badge to see why.`;
     }
     if (shots.length === 0)
       return guidedOn
-        ? `Guided fog: your first ${GUIDED_BEAMS} beams show the path they really took. Tap a lamp, then Fire.`
-        : 'Practice fog — nothing at stake. Tap a lamp to aim.';
-    return 'Fog burns off squares your beams prove empty. The rocks hide in what’s left — fire more, or drop buoys.';
+        ? `Guided: your first ${GUIDED_BEAMS} beams show their real path. Tap a lamp.`
+        : 'Practice fog. Tap a lamp to aim.';
+    return 'Fog clears where rocks can’t be. Fire more, or drop buoys.';
   })();
 
   return (
@@ -307,7 +307,7 @@ export const FreePlay = ({
                 >
                   {logState === 'error' ? (
                     <button className="btn btn-ghost small" onClick={openLog}>
-                      Couldn’t grade — try again
+                      Could not grade. Retry
                     </button>
                   ) : (
                     'Grading your beams…'

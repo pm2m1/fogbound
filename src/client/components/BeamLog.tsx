@@ -38,8 +38,7 @@ export const BeamLog = ({
         </span>
       </div>
       <p className="beamlog-explain">
-        Each beam narrows down where the rocks could be. Bigger drops = better
-        beams. “Expert” is the lamp that would have narrowed it most.
+        Each beam narrows where the rocks can be. Bigger drops, better beams.
       </p>
       <ol className="beamlog-list">
         {notes.map((n, i) => (
@@ -69,8 +68,8 @@ export const BeamLog = ({
       </ol>
       {last && last.after > 1 && (
         <p className="beamlog-warn">
-          You charted with {fmtCount(last.after)} layouts still possible — that
-          was a guess. Keep firing until the fog meter reads 1.
+          You charted with {fmtCount(last.after)} layouts left, so that was a
+          guess.
         </p>
       )}
       <p className="beamlog-foot">
