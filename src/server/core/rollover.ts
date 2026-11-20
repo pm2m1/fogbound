@@ -127,11 +127,11 @@ export const ensureDailyPost = async (day: number): Promise<string> => {
           (100 * recap.perfect) / Math.max(1, recap.players)
         );
         const bright = recap.brightest
-          ? `Brightest lamp: **u/${recap.brightest.name}**, whose beams guided ${recap.brightest.guided} players.`
+          ? `Brightest lamp: **u/${recap.brightest.name}**, whose beams guided ${recap.brightest.guided} ${recap.brightest.guided === 1 ? 'player' : 'players'}.`
           : 'Nobody borrowed a beam yesterday. Light one early today.';
         await reddit.submitComment({
           id: prevPost,
-          text: `**The fog lifted.** ${recap.players} players · ${pct}% found every rock.\n\n${bright}\n\nTonight's fog is rolling in. New post is up.`,
+          text: `**The fog lifted.** ${recap.players} ${recap.players === 1 ? 'player' : 'players'} · ${pct}% found every rock.\n\n${bright}\n\nTonight's fog is rolling in. New post is up.`,
         });
       }
     }

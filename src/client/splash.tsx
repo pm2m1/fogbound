@@ -20,7 +20,8 @@ const News = ({ data }: { data: InitResponse }) => {
     return (
       <p className="news">
         Last night <b>u/{r.brightest.name}</b>’s lamps guided{' '}
-        <b>{r.brightest.guided}</b> players through the fog.
+        <b>{r.brightest.guided}</b>{' '}
+        {r.brightest.guided === 1 ? 'player' : 'players'} through the fog.
       </p>
     );
   }
@@ -100,7 +101,8 @@ const Splash = ({ data }: { data: InitResponse }) => {
         <div className="row">
           {stats.players > 0 && (
             <span className="chip">
-              {stats.players.toLocaleString()} players · {perfectPct}% found
+              {stats.players.toLocaleString()}{' '}
+              {stats.players === 1 ? 'player' : 'players'} · {perfectPct}% found
               every rock
             </span>
           )}

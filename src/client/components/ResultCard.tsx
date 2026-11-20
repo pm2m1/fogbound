@@ -157,7 +157,7 @@ export const ResultCard = ({
         {fired} lamp{fired === 1 ? '' : 's'} fired
         {borrowed ? ` · ${borrowed} borrowed` : ''}
         {stats.players > 0 &&
-          ` · ${perfectPct}% of ${stats.players.toLocaleString()} players found every rock`}
+          ` · ${perfectPct}% of ${stats.players.toLocaleString()} ${stats.players === 1 ? 'player' : 'players'} found every rock`}
         {me && me.streak > 0 && ` · 🔥 ${me.streak}`}
       </p>
       {result.ranked && result.guidedToday === 0 && (
