@@ -9,15 +9,15 @@
         "entry": "splash.html",
         "height": "tall",
         "styles": {
-          "backgroundColor": "#0d1822",
-          "backgroundColorDark": "#0d1822"
+          "backgroundColor": "#0d1822ff",
+          "backgroundColorDark": "#0d1822ff"
         }
       },
       "game": {
         "entry": "game.html",
         "styles": {
-          "backgroundColor": "#0d1822",
-          "backgroundColorDark": "#0d1822"
+          "backgroundColor": "#0d1822ff",
+          "backgroundColorDark": "#0d1822ff"
         }
       }
     }
