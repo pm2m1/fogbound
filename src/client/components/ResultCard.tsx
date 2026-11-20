@@ -3,6 +3,9 @@ import type { DayStats, MyProfile, Result } from '../../shared/api';
 import { formatCountdown } from '../../shared/day';
 import { fmtHalf } from '../../shared/puzzle';
 import { api } from '../lib/api';
+
+/** flip to true once the app is approved and user actions run as the player */
+const NATIVE_SUBSCRIBE = false;
 import {
   askLogin,
   goTo,
@@ -91,12 +94,20 @@ export const ResultCard = ({
 
   const join = async () => {
     journey.interaction('subscribe');
+    const openSub = () => {
+      if (!sub) return;
+      toast(`Opening r/${sub}. Tap Join there.`);
+      goTo(`https://www.reddit.com/r/${sub}/`);
+    };
+    // Until the app is approved, Reddit runs user actions as the app account for
+    // everyone except the app owner, so the one-tap join cannot be trusted yet.
+    if (!NATIVE_SUBSCRIBE) return openSub();
     try {
       await api.subscribe();
       setJoined(true);
       toast(`Joined r/${sub ?? 'Fogbound'}`);
     } catch {
-      toast('Couldn’t join right now');
+      openSub();
     }
   };
 

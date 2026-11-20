@@ -354,7 +354,17 @@ api.post('/share', async (c) => {
   if (await redis.hGet(K.shared(day), userId))
     return c.json<ShareResponse>({ type: 'share', posted: false, text });
   try {
-    await reddit.submitComment({ id: postId, text, runAs: 'USER' });
+    const comment = await reddit.submitComment({
+      id: postId,
+      text,
+      runAs: 'USER',
+    });
+    // Unapproved apps post as the app account for everyone but the owner:
+    // put the player's name on the result so the thread still reads right.
+    if (comment.authorId && comment.authorId !== userId) {
+      const name = await reddit.getCurrentUsername().catch(() => undefined);
+      if (name) await comment.edit({ text: `**u/${name}** · ${text}` });
+    }
     await redis.hSet(K.shared(day), { [userId]: '1' });
     return c.json<ShareResponse>({ type: 'share', posted: true, text });
   } catch (e) {

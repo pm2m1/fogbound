@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
-import { comments, context, fakePosts, flairs, resetFake } from './fakeDevvit';
+import {
+  comments,
+  context,
+  fakePosts,
+  fakeReddit,
+  flairs,
+  resetFake,
+} from './fakeDevvit';
 import { api } from '../src/server/routes/api';
 import { scheduler } from '../src/server/routes/scheduler';
 import type {
@@ -271,6 +278,36 @@ describe('beam log', () => {
     expect(notes[1]!.before).toBe(notes[0]!.after);
     expect(notes.every((n) => n.skill >= 0 && n.skill <= 100)).toBe(true);
     expect(r.body.result.expertLine.length).toBe(puzzle.par);
+  }, 30_000);
+});
+
+describe('sharing', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    resetFake();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('names the player when Reddit posts the result as the app', async () => {
+    setDay(MONDAY + 1);
+    await rollover();
+    const puzzle = (await getPuzzle(MONDAY + 1))!;
+    usePost();
+    for (const [n, asApp] of [
+      [1, false],
+      [2, true],
+    ] as const) {
+      as(n);
+      fakeReddit.userActionsAsApp = asApp;
+      await fire(0);
+      await submit(puzzle.rocks);
+      const r = await post<{ posted: boolean; text: string }>('share', {});
+      expect(r.body.posted).toBe(true);
+      const c = comments.at(-1)!;
+      expect(c.body.includes(puzzle.rocks.join(','))).toBe(false);
+      if (asApp) expect(c.body.startsWith(`**u/keeper${n}** · `)).toBe(true);
+      else expect(c.author).toBe(`keeper${n}`);
+    }
   }, 30_000);
 });
 

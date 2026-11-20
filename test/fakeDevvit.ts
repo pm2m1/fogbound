@@ -12,6 +12,9 @@ type Ctx = {
   postData: Record<string, unknown> | undefined;
 };
 
+/** pre-approval Reddit runs user actions as the app account for non-owners */
+export const fakeReddit = { userActionsAsApp: false };
+
 export const context: Ctx = {
   postId: undefined,
   userId: undefined,
@@ -37,6 +40,7 @@ const z = (k: string) => {
 };
 
 export const resetFake = () => {
+  fakeReddit.userActionsAsApp = false;
   strings.clear();
   hashes.clear();
   zsets.clear();
@@ -200,14 +204,21 @@ export const reddit = {
       parentId: o.id,
       body: o.text,
       author:
-        o.runAs === 'USER' ? (context.username ?? 'anon') : context.appSlug,
+        o.runAs === 'USER' && !fakeReddit.userActionsAsApp
+          ? (context.username ?? 'anon')
+          : context.appSlug,
       score: 1,
       distinguished: false,
     };
     comments.push(c);
     return {
+      authorId:
+        c.author === context.appSlug ? 't2_app' : (context.userId ?? 't2_anon'),
       distinguish: async () => {
         c.distinguished = true;
+      },
+      edit: async (e: { text: string }) => {
+        c.body = e.text;
       },
     };
   },
