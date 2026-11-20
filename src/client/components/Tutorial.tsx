@@ -41,7 +41,7 @@ const STEPS: Step[] = [
     lamps: [3],
     ask: 'Now the lamp next to it. Watch the beam as it passes the rock.',
     after: [
-      'It turned 90° away from the rock and came out on the left. Rule 2: a rock just ahead and to one side bends the beam away. Matching numbers mark where a beam went in and came out.',
+      'It turned away from the rock and came out on the left. Rule 2: a rock diagonally ahead bends the beam 90° away. Matching numbers mark where it went in and out.',
     ],
   },
   {
@@ -138,7 +138,7 @@ export const Tutorial = ({
 
   const hint = (() => {
     if (solved)
-      return 'Found it! In the real game the fog also burns off every square your beams prove is empty — the rocks hide in what’s left. Fewer beams = better score. Next: a practice fog where your first beams show their real path.';
+      return 'Found it! In real games the fog also clears from squares your beams prove empty. Fewer beams = better score.';
     if (note) return note;
     if (placing) return 'Tap the water where the two ✕ lines cross.';
     return step.ask;
@@ -161,7 +161,7 @@ export const Tutorial = ({
         </button>
       </header>
 
-      <BoardFrame max={640} reserve={64}>
+      <BoardFrame max={640} reserve={112}>
         {(size) => (
           <div className="stage" style={{ width: size }}>
             <div style={{ width: size, height: size }}>

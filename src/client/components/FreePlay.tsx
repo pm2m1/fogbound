@@ -242,10 +242,10 @@ export const FreePlay = ({
       shots.length >= 1 &&
       shots.length <= GUIDED_BEAMS
     )
-      return `${note} The line shows its real path${
+      return `${note} ${
         shots.length === GUIDED_BEAMS
-          ? ' — from now on the fog hides the paths.'
-          : ` (guided beam ${shots.length} of ${GUIDED_BEAMS}).`
+          ? 'That was the last guided path.'
+          : `You can see its real path (${shots.length}/${GUIDED_BEAMS}).`
       }`;
     if (note) return note;
     if (selected !== null)
@@ -294,7 +294,7 @@ export const FreePlay = ({
         </div>
       )}
 
-      <BoardFrame max={640} reserve={56}>
+      <BoardFrame max={640} reserve={72}>
         {(size) => (
           <div className="stage" style={{ width: size }}>
             {done && view === 'log' ? (

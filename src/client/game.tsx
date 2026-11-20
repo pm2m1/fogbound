@@ -435,7 +435,7 @@ const Game = ({ data }: { data: InitResponse }) => {
             </div>
           )}
 
-          <BoardFrame max={640} reserve={done ? 0 : 56}>
+          <BoardFrame max={640} reserve={done ? 0 : 72}>
             {(size) => (
               <div className="stage" style={{ width: size }}>
                 {done && view === 'log' ? (
