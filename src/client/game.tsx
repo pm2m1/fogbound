@@ -384,154 +384,163 @@ const Game = ({ data }: { data: InitResponse }) => {
         </div>
       </header>
 
-      {done && (
-        <div className="seg" role="tablist" aria-label="Board view">
-          <button
-            role="tab"
-            aria-selected={view === 'beams'}
-            onClick={() => setView('beams')}
-          >
-            Your beams
-          </button>
-          <button
-            role="tab"
-            aria-selected={view === 'crowd'}
-            onClick={() => setView('crowd')}
-          >
-            Crowd buoys
-          </button>
-          <button
-            role="tab"
-            aria-selected={view === 'log'}
-            onClick={() => (setView('log'), journey.interaction('beam-log'))}
-          >
-            Beam log
-          </button>
-        </div>
-      )}
-
-      <BoardFrame max={640} reserve={done ? 0 : 56}>
-        {(size) => (
-          <div className="stage" style={{ width: size }}>
-            {done && view === 'log' ? (
-              <BeamLog result={done} size={size} />
-            ) : (
-              <div style={{ width: size, height: size }}>
-                <Bay
-                  clear={done ? null : clear}
-                  lamps={lamps}
-                  shots={done ? done.shots : shots}
-                  buoys={done ? done.buoys : buoys}
-                  selected={selected}
-                  rocks={done ? done.rocks : null}
-                  heat={done && view === 'crowd' ? done.buoyHeat : null}
-                  heatTotal={totalBuoyers}
-                  showPaths={Boolean(done) && view === 'beams'}
-                  flash={done ? null : flash}
-                  interactive={!done}
-                  onLamp={onLamp}
-                  onCell={onCell}
-                  checks={checks}
-                  ghost={ghost}
-                  label={
-                    done
-                      ? 'The fog has lifted'
-                      : `The bay, ${puzzle.k} rocks hidden`
-                  }
-                />
-              </div>
-            )}
-            {!done && (
-              <p className="hint" aria-live="polite">
-                {hint}
-              </p>
-            )}
-          </div>
-        )}
-      </BoardFrame>
-
-      {!done && (
-        <>
-          <div className="dock">
-            <div className="meters" aria-label="Your night so far">
-              <span className="meter">
-                Cost <b>{fmtHalf(costHalf)}</b> · par {puzzle.par}
-              </span>
-              {ranked && (
-                <span className="meter">
-                  <LampIcon /> {borrowsLeft} cheap borrows
-                </span>
-              )}
-              <span
-                className={`meter fogm ${charts === 1 ? 'clear' : ''}`}
-                title="Rock layouts that still fit your beams"
+      <div className={done ? 'done-layout' : 'contents'}>
+        <div className={done ? 'done-board' : 'contents'}>
+          {done && (
+            <div className="seg" role="tablist" aria-label="Board view">
+              <button
+                role="tab"
+                aria-selected={view === 'beams'}
+                onClick={() => setView('beams')}
               >
-                <FogIcon />{' '}
-                {charts === null
-                  ? '…'
-                  : charts === 1
-                    ? '1 layout left'
-                    : `${fmtCount(charts)} layouts`}
-              </span>
-              <span className="meter">
-                Buoys {buoys.length}/{puzzle.k}
-              </span>
+                Your beams
+              </button>
+              <button
+                role="tab"
+                aria-selected={view === 'crowd'}
+                onClick={() => setView('crowd')}
+              >
+                Crowd buoys
+              </button>
+              <button
+                role="tab"
+                aria-selected={view === 'log'}
+                onClick={() => (
+                  setView('log'),
+                  journey.interaction('beam-log')
+                )}
+              >
+                Beam log
+              </button>
             </div>
-            {selected !== null ? (
-              <div className="actions">
-                {canBorrow && (
-                  <button
-                    className="btn btn-ghost"
-                    disabled={busy}
-                    onClick={() => void shoot('borrow')}
-                  >
-                    Borrow · ½
-                  </button>
+          )}
+
+          <BoardFrame max={640} reserve={done ? 0 : 56}>
+            {(size) => (
+              <div className="stage" style={{ width: size }}>
+                {done && view === 'log' ? (
+                  <BeamLog result={done} size={size} />
+                ) : (
+                  <div style={{ width: size, height: size }}>
+                    <Bay
+                      clear={done ? null : clear}
+                      lamps={lamps}
+                      shots={done ? done.shots : shots}
+                      buoys={done ? done.buoys : buoys}
+                      selected={selected}
+                      rocks={done ? done.rocks : null}
+                      heat={done && view === 'crowd' ? done.buoyHeat : null}
+                      heatTotal={totalBuoyers}
+                      showPaths={Boolean(done) && view === 'beams'}
+                      flash={done ? null : flash}
+                      interactive={!done}
+                      onLamp={onLamp}
+                      onCell={onCell}
+                      checks={checks}
+                      ghost={ghost}
+                      label={
+                        done
+                          ? 'The fog has lifted'
+                          : `The bay, ${puzzle.k} rocks hidden`
+                      }
+                    />
+                  </div>
                 )}
-                <button
-                  className="btn btn-lamp"
-                  disabled={busy}
-                  onClick={() => void shoot('fire')}
-                >
-                  Fire lamp · 1
-                </button>
-              </div>
-            ) : (
-              <div className="actions">
-                {!data.loggedIn && onReddit() && (
-                  <button className="btn btn-ghost" onClick={askLogin}>
-                    Log in to rank
-                  </button>
+                {!done && (
+                  <p className="hint" aria-live="polite">
+                    {hint}
+                  </p>
                 )}
-                <button
-                  className="btn btn-lamp"
-                  disabled={
-                    busy || buoys.length !== puzzle.k || shots.length === 0
-                  }
-                  onClick={() => void chart()}
-                >
-                  {armedFor === buoys.join() ? 'Chart anyway' : 'Chart the fog'}
-                </button>
               </div>
             )}
-          </div>
-        </>
-      )}
+          </BoardFrame>
+        </div>
 
-      {done && (
-        <ResultCard
-          result={done}
-          par={puzzle.par}
-          stats={stats}
-          me={me}
-          number={data.number}
-          isToday={data.isToday}
-          todayPostId={data.todayPostId}
-          nextAt={data.nextAt}
-          loggedIn={data.loggedIn}
-          onPractice={() => setFree(true)}
-        />
-      )}
+        {!done && (
+          <>
+            <div className="dock">
+              <div className="meters" aria-label="Your night so far">
+                <span className="meter">
+                  Cost <b>{fmtHalf(costHalf)}</b> · par {puzzle.par}
+                </span>
+                {ranked && (
+                  <span className="meter">
+                    <LampIcon /> {borrowsLeft} cheap borrows
+                  </span>
+                )}
+                <span
+                  className={`meter fogm ${charts === 1 ? 'clear' : ''}`}
+                  title="Rock layouts that still fit your beams"
+                >
+                  <FogIcon />{' '}
+                  {charts === null
+                    ? '…'
+                    : charts === 1
+                      ? '1 layout left'
+                      : `${fmtCount(charts)} layouts`}
+                </span>
+                <span className="meter">
+                  Buoys {buoys.length}/{puzzle.k}
+                </span>
+              </div>
+              {selected !== null ? (
+                <div className="actions">
+                  {canBorrow && (
+                    <button
+                      className="btn btn-ghost"
+                      disabled={busy}
+                      onClick={() => void shoot('borrow')}
+                    >
+                      Borrow · ½
+                    </button>
+                  )}
+                  <button
+                    className="btn btn-lamp"
+                    disabled={busy}
+                    onClick={() => void shoot('fire')}
+                  >
+                    Fire lamp · 1
+                  </button>
+                </div>
+              ) : (
+                <div className="actions">
+                  {!data.loggedIn && onReddit() && (
+                    <button className="btn btn-ghost" onClick={askLogin}>
+                      Log in to rank
+                    </button>
+                  )}
+                  <button
+                    className="btn btn-lamp"
+                    disabled={
+                      busy || buoys.length !== puzzle.k || shots.length === 0
+                    }
+                    onClick={() => void chart()}
+                  >
+                    {armedFor === buoys.join()
+                      ? 'Chart anyway'
+                      : 'Chart the fog'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {done && (
+          <ResultCard
+            result={done}
+            par={puzzle.par}
+            stats={stats}
+            me={me}
+            number={data.number}
+            isToday={data.isToday}
+            todayPostId={data.todayPostId}
+            nextAt={data.nextAt}
+            loggedIn={data.loggedIn}
+            onPractice={() => setFree(true)}
+          />
+        )}
+      </div>
 
       {coach && (
         <Coach

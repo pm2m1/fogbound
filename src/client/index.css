@@ -1170,3 +1170,55 @@ button {
   fill: #9fb6cc;
   opacity: 0.3;
 }
+
+/* ---- after charting: board + result never squeeze each other ---- */
+.contents {
+  display: contents;
+}
+.game.is-done {
+  max-width: 1000px;
+}
+.done-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.done-board {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+}
+.done-board .board-wrap {
+  flex: none;
+  height: min(calc(100vw - 24px), 460px);
+}
+.done-layout > .result {
+  flex: none;
+}
+@media (min-width: 700px) {
+  .done-layout {
+    flex-direction: row;
+    align-items: center;
+    overflow: hidden;
+  }
+  .done-board {
+    flex: 1 1 auto;
+    align-self: stretch;
+    min-width: 0;
+    min-height: 0;
+  }
+  .done-board .board-wrap {
+    flex: 1 1 auto;
+    height: auto;
+  }
+  .done-layout > .result {
+    flex: 0 0 340px;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+}
