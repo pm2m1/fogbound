@@ -7,10 +7,18 @@
       "default": {
         "inline": true,
         "entry": "splash.html",
-        "height": "tall"
+        "height": "tall",
+        "styles": {
+          "backgroundColor": "#0d1822",
+          "backgroundColorDark": "#0d1822"
+        }
       },
       "game": {
-        "entry": "game.html"
+        "entry": "game.html",
+        "styles": {
+          "backgroundColor": "#0d1822",
+          "backgroundColorDark": "#0d1822"
+        }
       }
     }
   },
@@ -24,10 +32,7 @@
     "reddit": {
       "enable": true,
       "scope": "user",
-      "asUser": [
-        "SUBMIT_COMMENT",
-        "SUBSCRIBE_TO_SUBREDDIT"
-      ]
+      "asUser": ["SUBMIT_COMMENT", "SUBSCRIBE_TO_SUBREDDIT"]
     }
   },
   "scheduler": {
