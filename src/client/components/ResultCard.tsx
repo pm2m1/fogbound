@@ -40,6 +40,7 @@ type Props = {
   todayPostId: string | null;
   nextAt: number;
   loggedIn: boolean;
+  onPractice: () => void;
 };
 
 export const ResultCard = ({
@@ -51,6 +52,7 @@ export const ResultCard = ({
   todayPostId,
   nextAt,
   loggedIn,
+  onPractice,
 }: Props) => {
   const [shared, setShared] = useState<'idle' | 'busy' | 'done'>('idle');
   const [joined, setJoined] = useState(false);
@@ -186,6 +188,9 @@ export const ResultCard = ({
           Next fog in <Countdown at={nextAt} />
         </p>
       )}
+      <button className="linkbtn" onClick={onPractice}>
+        Can’t wait for tomorrow? Play a practice fog →
+      </button>
     </section>
   );
 };

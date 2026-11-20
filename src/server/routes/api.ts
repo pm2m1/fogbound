@@ -4,6 +4,7 @@ import type {
   ErrorResponse,
   FireResponse,
   InitResponse,
+  PracticeResponse,
   Result,
   ShareResponse,
   SubmitResponse,
@@ -12,6 +13,7 @@ import { analyzeShots, buildSpace } from '../../shared/beam';
 import { todayIndex } from '../../shared/day';
 import {
   countWrong,
+  generatePuzzle,
   publicPuzzle,
   resolveShot,
   scoreHalf,
@@ -274,6 +276,22 @@ api.post('/submit', (c) =>
       userId
     );
     return { type: 'submit', result, stats: await getStats(day), me };
+  })
+);
+
+/** A fresh, unranked practice fog. Never touches the daily puzzle, scores or lamps. */
+api.get('/practice', (c) =>
+  handle(c, async (): Promise<PracticeResponse> => {
+    const salt = Math.random().toString(36).slice(2);
+    const day = 100_000 + Math.floor(Math.random() * 6); // weekdays Tue–Sun: always 4 rocks
+    const p = generatePuzzle(day, salt);
+    return {
+      type: 'practice',
+      k: p.k,
+      par: p.par,
+      rocks: p.rocks,
+      line: p.line ?? [],
+    };
   })
 );
 

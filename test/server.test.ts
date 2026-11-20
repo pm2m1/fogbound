@@ -271,3 +271,28 @@ describe('beam log', () => {
     expect(r.body.result.expertLine.length).toBe(puzzle.par);
   }, 30_000);
 });
+
+describe('practice fogs', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    resetFake();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('serves fresh unique fogs without touching the daily game', async () => {
+    setDay(MONDAY + 1);
+    await rollover();
+    usePost();
+    as(1);
+    const r = await app.request('/api/practice');
+    const p = (await r.json()) as { k: number; par: number; rocks: number[]; line: number[] };
+    expect(p.k).toBe(4);
+    expect(isUnique(buildSpace(4), p.rocks)).toBe(true);
+    expect(p.line).toHaveLength(p.par);
+    const again = (await (await app.request('/api/practice')).json()) as { rocks: number[] };
+    expect(again.rocks).not.toEqual(p.rocks);
+    const d = await init();
+    expect(d.stats.players).toBe(0);
+    expect(d.run.shots).toHaveLength(0);
+  }, 30_000);
+});

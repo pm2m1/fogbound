@@ -241,5 +241,18 @@ export const mockCall = async <T>(path: string, body?: unknown): Promise<T> => {
     return r as T;
   }
   if (path === '/api/subscribe') return { ok: true } as T;
+  if (path === '/api/practice') {
+    const p = generatePuzzle(
+      100_000 + Math.floor(Math.random() * 6),
+      Math.random().toString(36)
+    );
+    return {
+      type: 'practice',
+      k: p.k,
+      par: p.par,
+      rocks: p.rocks,
+      line: p.line ?? [],
+    } as T;
+  }
   throw new Error(`mock: unknown ${path}`);
 };

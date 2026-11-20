@@ -1125,3 +1125,21 @@ button {
   padding: 0 16px;
   font-size: 14px;
 }
+
+.linkbtn {
+  align-self: center;
+  min-height: 36px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lamp-hi);
+}
+
+.stars.center {
+  justify-content: center;
+  font-size: 26px;
+}
+
+.coach-card .actions .btn {
+  padding: 0 12px;
+}

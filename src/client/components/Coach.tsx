@@ -28,9 +28,11 @@ const rock = (x: number, y: number) => (
 export const Coach = ({
   onClose,
   onPractice,
+  onFree,
 }: {
   onClose: () => void;
   onPractice: () => void;
+  onFree: () => void;
 }) => (
   <div
     className="coach"
@@ -97,6 +99,9 @@ export const Coach = ({
       </p>
       <div className="actions">
         <button className="btn btn-ghost" onClick={onPractice}>
+          Lesson
+        </button>
+        <button className="btn btn-ghost" onClick={onFree}>
           Practice fog
         </button>
         <button className="btn btn-lamp" onClick={onClose} autoFocus>

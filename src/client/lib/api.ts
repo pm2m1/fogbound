@@ -1,6 +1,7 @@
 import type {
   FireResponse,
   InitResponse,
+  PracticeResponse,
   ShareResponse,
   SubmitResponse,
 } from '../../shared/api';
@@ -54,4 +55,5 @@ export const api = {
     call<SubmitResponse>('/api/submit', shots ? { buoys, shots } : { buoys }),
   share: () => call<ShareResponse>('/api/share', {}),
   subscribe: () => call<{ ok: boolean }>('/api/subscribe', {}),
+  practice: () => call<PracticeResponse>('/api/practice'),
 };

@@ -33,6 +33,7 @@ import { BeamLog } from './components/BeamLog';
 import { BoardFrame } from './components/BoardFrame';
 import { Coach } from './components/Coach';
 import { Tutorial } from './components/Tutorial';
+import { FreePlay } from './components/FreePlay';
 import { ResultCard } from './components/ResultCard';
 import { ApiError, api } from './lib/api';
 import { fmtCount, lampName, lampShort } from './lib/geometry';
@@ -130,6 +131,7 @@ const Game = ({ data }: { data: InitResponse }) => {
   const [stats, setStats] = useState<DayStats>(data.stats);
   const [me, setMe] = useState<MyProfile | null>(data.me);
   const [coach, setCoach] = useState(false);
+  const [free, setFree] = useState(false);
   const [practice, setPractice] = useState(
     () => !readSeen() && !data.result && data.run.shots.length === 0
   );
@@ -335,6 +337,7 @@ const Game = ({ data }: { data: InitResponse }) => {
   const totalBuoyers = stats.players + (done && !done.ranked ? 1 : 0);
 
   if (practice) return <Tutorial onDone={finishPractice} />;
+  if (free) return <FreePlay onExit={() => setFree(false)} />;
 
   return (
     <main className={`game ${done ? 'is-done' : ''}`}>
@@ -499,6 +502,7 @@ const Game = ({ data }: { data: InitResponse }) => {
           todayPostId={data.todayPostId}
           nextAt={data.nextAt}
           loggedIn={data.loggedIn}
+          onPractice={() => setFree(true)}
         />
       )}
 
@@ -506,6 +510,7 @@ const Game = ({ data }: { data: InitResponse }) => {
         <Coach
           onClose={closeCoach}
           onPractice={() => (closeCoach(), setPractice(true))}
+          onFree={() => (closeCoach(), setFree(true))}
         />
       )}
     </main>

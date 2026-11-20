@@ -1,0 +1,296 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Lamp, PracticeResponse, Run } from '../../shared/api';
+import {
+  FogMeter,
+  LOST,
+  PORTS,
+  RETURNED,
+  explains,
+  totalCharts,
+  trace,
+} from '../../shared/beam';
+import { countWrong, fmtHalf, scoreHalf, starsFor } from '../../shared/puzzle';
+import { api } from '../lib/api';
+import { fmtCount, lampShort } from '../lib/geometry';
+import { journey } from '../lib/platform';
+import { Bay, markersFor, type Flash } from './Bay';
+import { BoardFrame } from './BoardFrame';
+
+const DARK: Lamp[] = Array.from({ length: PORTS }, (_, p) => ({
+  port: p,
+  by: null,
+  fuel: 0,
+  fires: 0,
+  borrows: 0,
+}));
+
+const outcomeText = (o: number) =>
+  o === LOST
+    ? 'Lost on a rock.'
+    : o === RETURNED
+      ? 'It came straight back.'
+      : `It came out at ${lampShort(o)}.`;
+
+/**
+ * Unlimited practice fogs: unranked, played entirely on the device. They never touch
+ * the daily puzzle, scores, streaks or the shared lamps.
+ */
+export const FreePlay = ({ onExit }: { onExit: () => void }) => {
+  const [fog, setFog] = useState<PracticeResponse | null>(null);
+  const [shots, setShots] = useState<Run['shots']>([]);
+  const [buoys, setBuoys] = useState<number[]>([]);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [flash, setFlash] = useState<Flash | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [charts, setCharts] = useState<number | null>(null);
+  const [ghost, setGhost] = useState<number | null>(null);
+  const [done, setDone] = useState(false);
+  const [count, setCount] = useState(0);
+  const key = useRef(0);
+  const meter = useRef<FogMeter | null>(null);
+
+  const fetchFog = useCallback(
+    () =>
+      api
+        .practice()
+        .then((f) => {
+          meter.current = new FogMeter(f.k);
+          setCharts(totalCharts(f.k));
+          setFog(f);
+          journey.interaction('practice-fog');
+        })
+        .catch(() => setNote('The fog would not roll in — try again')),
+    []
+  );
+
+  useEffect(() => {
+    void fetchFog();
+  }, [fetchFog]);
+
+  const load = () => {
+    setFog(null);
+    setShots([]);
+    setBuoys([]);
+    setSelected(null);
+    setFlash(null);
+    setNote(null);
+    setGhost(null);
+    setDone(false);
+    void fetchFog();
+  };
+
+  useEffect(() => {
+    if (!fog || !meter.current || shots.length === 0) return;
+    let live = true;
+    meter.current
+      .count(shots.map((s) => ({ port: s.port, outcome: s.outcome })))
+      .then((n) => live && setCharts(n))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [shots, fog]);
+
+  const markers = useMemo(() => markersFor(shots), [shots]);
+  const checks = useMemo(() => {
+    if (!fog || done || buoys.length !== fog.k || shots.length === 0)
+      return null;
+    return new Map(shots.map((s) => [s.port, explains(buoys, s)] as const));
+  }, [fog, done, buoys, shots]);
+
+  if (!fog)
+    return (
+      <main className="game">
+        <div className="loading">{note ?? 'Fog rolling in…'}</div>
+      </main>
+    );
+
+  const costHalf = scoreHalf(shots, 0);
+  const wrong = done ? countWrong(fog.rocks, buoys) : 0;
+  const stars = done ? starsFor(wrong, costHalf, fog.par) : 0;
+
+  const onLamp = (p: number) => {
+    if (done) return;
+    const fired = shots.find((s) => s.port === p);
+    if (fired && buoys.length === fog.k) {
+      setGhost((g) => (g === p ? null : p));
+      const hyp = trace(p, buoys);
+      setNote(
+        hyp === fired.outcome
+          ? `Your buoys explain ${lampShort(p)}.`
+          : `Your buoys: ${outcomeText(hyp).toLowerCase()} Really: ${outcomeText(fired.outcome).toLowerCase()}`
+      );
+      return;
+    }
+    setGhost(null);
+    if (markers.has(p)) {
+      setNote('You already know what this lamp does.');
+      return;
+    }
+    setNote(null);
+    setSelected((s) => (s === p ? null : p));
+  };
+
+  const fire = () => {
+    if (selected === null) return;
+    const outcome = trace(selected, fog.rocks);
+    setShots((s) => [...s, { port: selected, outcome, borrowed: false }]);
+    key.current++;
+    setFlash({ port: selected, outcome, key: key.current });
+    setNote(outcomeText(outcome));
+    setSelected(null);
+    try {
+      navigator.vibrate?.(outcome === LOST ? [18, 60, 18] : 12);
+    } catch {
+      /* no haptics */
+    }
+  };
+
+  const onCell = (c: number) => {
+    if (done) return;
+    setSelected(null);
+    setGhost(null);
+    setNote(null);
+    setBuoys((b) =>
+      b.includes(c)
+        ? b.filter((x) => x !== c)
+        : b.length < fog.k
+          ? [...b, c]
+          : b
+    );
+  };
+
+  const chart = () => {
+    setDone(true);
+    setSelected(null);
+    setGhost(null);
+    setCount((n) => n + 1);
+    journey.interaction('practice-charted');
+  };
+
+  const explained = checks ? [...checks.values()].filter(Boolean).length : 0;
+  const hint = (() => {
+    if (done)
+      return wrong === 0
+        ? `Every rock charted for ${fmtHalf(costHalf)} — par was ${fog.par}.`
+        : `${wrong} buoy${wrong > 1 ? 's' : ''} on open water. The fog has lifted — see how the beams really ran.`;
+    if (note) return note;
+    if (selected !== null)
+      return `${lampShort(selected)}: fire to send a beam into the fog.`;
+    if (checks) {
+      if (explained === checks.size && charts === 1)
+        return 'Your buoys explain every beam — and only one layout does. Chart it!';
+      if (explained === checks.size)
+        return 'Your buoys explain every beam, but other layouts do too. Gamble, or fire another lamp?';
+      return `Your buoys explain ${explained} of ${checks.size} beams. Tap a ✗ lamp to compare.`;
+    }
+    if (shots.length === 0)
+      return 'Practice fog — nothing at stake. Tap a lamp to aim.';
+    return 'Drop buoys where you think the rocks are.';
+  })();
+
+  return (
+    <main className={`game ${done ? 'is-done' : ''}`}>
+      <header className="topbar">
+        <div>
+          <h1 className="wordmark small">Practice fog</h1>
+          <div className="sub">
+            Unranked · {fog.k} rocks · par {fog.par}
+            {count > 0 && ` · ${count} charted`}
+          </div>
+        </div>
+        <button className="btn btn-ghost small" onClick={onExit}>
+          Back
+        </button>
+      </header>
+
+      <BoardFrame max={640} reserve={56}>
+        {(size) => (
+          <div className="stage" style={{ width: size }}>
+            <div style={{ width: size, height: size }}>
+              <Bay
+                lamps={DARK}
+                shots={shots}
+                buoys={buoys}
+                selected={selected}
+                rocks={done ? fog.rocks : null}
+                showPaths={done}
+                flash={done ? null : flash}
+                interactive={!done}
+                onLamp={onLamp}
+                onCell={onCell}
+                checks={checks}
+                ghost={ghost}
+                label={
+                  done
+                    ? 'The practice fog has lifted'
+                    : `Practice fog, ${fog.k} rocks hidden`
+                }
+              />
+            </div>
+            <p className="hint" aria-live="polite">
+              {hint}
+            </p>
+          </div>
+        )}
+      </BoardFrame>
+
+      <div className="dock">
+        {!done && (
+          <div className="meters">
+            <span className="meter">
+              Cost <b>{fmtHalf(costHalf)}</b> · par {fog.par}
+            </span>
+            <span className={`meter fogm ${charts === 1 ? 'clear' : ''}`}>
+              {charts === null
+                ? '…'
+                : charts === 1
+                  ? '1 layout left'
+                  : `${fmtCount(charts)} layouts`}
+            </span>
+            <span className="meter">
+              Buoys {buoys.length}/{fog.k}
+            </span>
+          </div>
+        )}
+        {done && (
+          <div className="stars center" aria-label={`${stars} of 3 stars`}>
+            {[1, 2, 3].map((i) => (
+              <span
+                key={i}
+                className={i <= stars ? 'on' : ''}
+                aria-hidden="true"
+              >
+                ★
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="actions">
+          {done ? (
+            <>
+              <button className="btn btn-ghost" onClick={onExit}>
+                Back to tonight
+              </button>
+              <button className="btn btn-lamp" onClick={load}>
+                Another fog
+              </button>
+            </>
+          ) : selected !== null ? (
+            <button className="btn btn-lamp" onClick={fire}>
+              Fire lamp · 1
+            </button>
+          ) : (
+            <button
+              className="btn btn-lamp"
+              disabled={buoys.length !== fog.k || shots.length === 0}
+              onClick={chart}
+            >
+              Chart the fog
+            </button>
+          )}
+        </div>
+      </div>
+    </main>
+  );
+};

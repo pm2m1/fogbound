@@ -103,4 +103,13 @@ export type SubmitResponse = {
 
 export type ShareResponse = { type: 'share'; posted: boolean; text: string };
 
+/** Unranked practice fog: rocks are sent up front because nothing is at stake. */
+export type PracticeResponse = {
+  type: 'practice';
+  k: number;
+  par: number;
+  rocks: number[];
+  line: number[];
+};
+
 export type ErrorResponse = { status: 'error'; message: string };
