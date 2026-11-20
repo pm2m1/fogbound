@@ -407,7 +407,7 @@ const Game = ({ data }: { data: InitResponse }) => {
                 aria-selected={view === 'crowd'}
                 onClick={() => setView('crowd')}
               >
-                Crowd buoys
+                Everyone’s guesses
               </button>
               <button
                 role="tab"

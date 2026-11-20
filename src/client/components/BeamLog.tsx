@@ -33,10 +33,14 @@ export const BeamLog = ({
           Skill <b>{avg}</b>
         </span>
         <span>
-          {fmtCount(notes[0]?.before ?? 0)} charts →{' '}
+          {fmtCount(notes[0]?.before ?? 0)} layouts →{' '}
           <b>{fmtCount(last?.after ?? 0)}</b>
         </span>
       </div>
+      <p className="beamlog-explain">
+        Each beam narrows down where the rocks could be. Bigger drops = better
+        beams. “Expert” is the lamp that would have narrowed it most.
+      </p>
       <ol className="beamlog-list">
         {notes.map((n, i) => (
           <li key={n.port}>

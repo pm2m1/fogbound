@@ -81,7 +81,7 @@ const howToPlay = (p: Puzzle): string =>
     '',
     '**Easiest trick:** fire a top lamp and a side lamp. If both show ✕, check the square where the two lines cross.',
     '',
-    `Each beam costs **1**; borrowing a lamp another keeper already lit costs **½** (up to ${BORROW_CAP} a day, each lamp lights ${FUEL} borrows) and they get the credit. Each wrong buoy costs **5**. Par is **${p.par}**.`,
+    `Each beam costs **1**; borrowing a lamp another player already lit costs **½** (up to ${BORROW_CAP} a day, each lamp lights ${FUEL} borrows) and they get the credit. Each wrong buoy costs **5**. Par is **${p.par}**.`,
     '',
     'New? Tap **?** in the game for the 1-minute lesson, or **Practice** for unlimited free fogs. Please no rock coordinates in comments.',
   ].join('\n');
@@ -127,11 +127,11 @@ export const ensureDailyPost = async (day: number): Promise<string> => {
           (100 * recap.perfect) / Math.max(1, recap.players)
         );
         const bright = recap.brightest
-          ? `Brightest lamp: **u/${recap.brightest.name}**, whose beams guided ${recap.brightest.guided} keepers.`
+          ? `Brightest lamp: **u/${recap.brightest.name}**, whose beams guided ${recap.brightest.guided} players.`
           : 'Nobody borrowed a beam yesterday — light one early today.';
         await reddit.submitComment({
           id: prevPost,
-          text: `**The fog lifted.** ${recap.players} keepers · ${pct}% charted every rock.\n\n${bright}\n\nTonight's fog is rolling in — new post is up.`,
+          text: `**The fog lifted.** ${recap.players} players · ${pct}% found every rock.\n\n${bright}\n\nTonight's fog is rolling in — new post is up.`,
         });
       }
     }

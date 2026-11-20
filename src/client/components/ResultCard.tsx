@@ -131,25 +131,29 @@ export const ResultCard = ({
         </div>
         <div>
           <b>{result.ranked ? `${result.beatPct}%` : '—'}</b>
-          <span>{result.ranked ? 'keepers beaten' : 'practice'}</span>
+          <span>{result.ranked ? 'of players beaten' : 'practice'}</span>
         </div>
         <div>
           <b>{result.guidedToday}</b>
-          <span>keepers your lamps guided</span>
+          <span>players who used your lamps</span>
         </div>
       </div>
+      <p className="result-explain">
+        Score = 1 per beam (½ if borrowed) + 5 per wrong buoy. Par is what a
+        sharp player needs. Lower is better.
+      </p>
 
       <p className="result-line">
         {fired} lamp{fired === 1 ? '' : 's'} fired
         {borrowed ? ` · ${borrowed} borrowed` : ''}
         {stats.players > 0 &&
-          ` · ${perfectPct}% of ${stats.players.toLocaleString()} keepers charted every rock`}
+          ` · ${perfectPct}% of ${stats.players.toLocaleString()} players found every rock`}
         {me && me.streak > 0 && ` · 🔥 ${me.streak}`}
       </p>
       {result.ranked && result.guidedToday === 0 && (
         <p className="result-tip">
-          Light a lamp early tomorrow — every keeper who borrows it is credited
-          to you.
+          Light a lamp early tomorrow — anyone who borrows it is credited to
+          you.
         </p>
       )}
 

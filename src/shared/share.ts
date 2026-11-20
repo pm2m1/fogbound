@@ -29,10 +29,10 @@ export const buildShareText = (o: {
     tail.push(
       o.chartsLeft === 1
         ? '🌫 fog fully read'
-        : `🌫 charted with ${o.chartsLeft} charts still possible`
+        : `🌫 charted with ${o.chartsLeft} layouts still possible`
     );
   if (o.guided > 0)
-    tail.push(`my lamps guided ${o.guided} keeper${o.guided > 1 ? 's' : ''}`);
+    tail.push(`my lamps guided ${o.guided} player${o.guided > 1 ? 's' : ''}`);
   if (o.streak > 1) tail.push(`🔥 ${o.streak}-day streak`);
   if (tail.length) lines.push('', tail.join(' · '));
   return lines.join('\n');

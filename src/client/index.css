@@ -1236,3 +1236,15 @@ button {
   line-height: 1.4;
   color: #ffb38a;
 }
+
+.result-explain,
+.beamlog-explain {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: center;
+}
+.beamlog-explain {
+  text-align: left;
+}

@@ -17,7 +17,7 @@ const News = ({ data }: { data: InitResponse }) => {
     return (
       <p className="news">
         Last night <b>u/{r.brightest.name}</b>’s lamps guided{' '}
-        <b>{r.brightest.guided}</b> keepers through the fog.
+        <b>{r.brightest.guided}</b> players through the fog.
       </p>
     );
   }
@@ -31,8 +31,8 @@ const News = ({ data }: { data: InitResponse }) => {
   }
   return (
     <p className="news">
-      The shore is dark. <b>Light the first lamp</b> — every keeper who borrows
-      it is yours.
+      The shore is dark. <b>Light the first lamp</b> — anyone who borrows it is
+      credited to you.
     </p>
   );
 };
@@ -91,8 +91,8 @@ const Splash = ({ data }: { data: InitResponse }) => {
         <div className="row">
           {stats.players > 0 && (
             <span className="chip">
-              {stats.players.toLocaleString()} keepers · {perfectPct}% charted
-              it all
+              {stats.players.toLocaleString()} players · {perfectPct}% found
+              every rock
             </span>
           )}
           {me && me.streak > 0 && (
