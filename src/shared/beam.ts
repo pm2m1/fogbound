@@ -388,6 +388,17 @@ export class FogMeter {
     this.cacheObs = obs.map((o) => ({ ...o }));
     return out.length / k;
   }
+
+  /**
+   * Cells proven rock-free: no layout that still fits the beams puts a rock there.
+   * Call after count(); null before the first beam.
+   */
+  clearCells(): Uint8Array | null {
+    if (!this.cache || this.cacheObs.length === 0) return null;
+    const any = new Uint8Array(this.n * this.n);
+    for (const c of this.cache) any[c] = 1;
+    return any.map((v) => (v ? 0 : 1));
+  }
 }
 
 export const totalCharts = (k: number, n = N): number => combos(n * n, k);

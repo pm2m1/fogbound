@@ -44,6 +44,7 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
   const [note, setNote] = useState<string | null>(null);
   const [charts, setCharts] = useState<number | null>(null);
   const [ghost, setGhost] = useState<number | null>(null);
+  const [clear, setClear] = useState<Uint8Array | null>(null);
   const [done, setDone] = useState(false);
   const [count, setCount] = useState(0);
   const [armedFor, setArmedFor] = useState<string | null>(null);
@@ -76,6 +77,7 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
     setFlash(null);
     setNote(null);
     setGhost(null);
+    setClear(null);
     setDone(false);
     void fetchFog();
   };
@@ -85,7 +87,11 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
     let live = true;
     meter.current
       .count(shots.map((s) => ({ port: s.port, outcome: s.outcome })))
-      .then((n) => live && setCharts(n))
+      .then((n) => {
+        if (!live) return;
+        setCharts(n);
+        setClear(meter.current?.clearCells() ?? null);
+      })
       .catch(() => undefined);
     return () => {
       live = false;
@@ -196,7 +202,7 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
     }
     if (shots.length === 0)
       return 'Practice fog — nothing at stake. Tap a lamp to aim.';
-    return 'Drop buoys where you think the rocks are.';
+    return 'Fog burns off squares your beams prove empty. The rocks hide in what’s left — fire more, or drop buoys.';
   })();
 
   return (
@@ -219,6 +225,7 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
           <div className="stage" style={{ width: size }}>
             <div style={{ width: size, height: size }}>
               <Bay
+                clear={done ? null : clear}
                 lamps={DARK}
                 shots={shots}
                 buoys={buoys}

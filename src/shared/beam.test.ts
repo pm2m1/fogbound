@@ -132,3 +132,27 @@ describe('fog meter, theory check, beam log', () => {
     assert.ok(notes.every((n) => n.skill === 100));
   });
 });
+
+describe('fog clearing', () => {
+  it('burns off exactly the cells no surviving layout can hold', async () => {
+    const meter = new FogMeter(1);
+    assert.equal(meter.clearCells(), null);
+    const rock = [42];
+    const o1 = { port: 2, outcome: trace(2, rock) };
+    assert.equal(await meter.count([o1]), 8); // anywhere down column 3
+    const c1 = meter.clearCells()!;
+    assert.equal(
+      c1.reduce((a, b) => a + b, 0),
+      56
+    );
+    assert.equal(c1[42], 0);
+    const o2 = { port: 29, outcome: trace(29, rock) };
+    assert.equal(await meter.count([o1, o2]), 1);
+    const c2 = meter.clearCells()!;
+    assert.equal(
+      c2.reduce((a, b) => a + b, 0),
+      63
+    );
+    assert.equal(c2[42], 0);
+  });
+});

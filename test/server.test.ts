@@ -74,7 +74,9 @@ describe('Fogbound server', () => {
     expect(todaysPost().stickied).toBe(true);
     expect(todaysPost().title).toMatch(/^Fogbound #1 · Monday: 3 rocks/);
     expect(
-      comments.some((c) => c.distinguished && c.body.includes('3 rocks are hidden'))
+      comments.some(
+        (c) => c.distinguished && c.body.includes('3 rocks are hidden')
+      )
     ).toBe(true);
 
     const puzzle = (await getPuzzle(MONDAY))!;
@@ -285,11 +287,18 @@ describe('practice fogs', () => {
     usePost();
     as(1);
     const r = await app.request('/api/practice');
-    const p = (await r.json()) as { k: number; par: number; rocks: number[]; line: number[] };
+    const p = (await r.json()) as {
+      k: number;
+      par: number;
+      rocks: number[];
+      line: number[];
+    };
     expect(p.k).toBe(4);
     expect(isUnique(buildSpace(4), p.rocks)).toBe(true);
     expect(p.line).toHaveLength(p.par);
-    const again = (await (await app.request('/api/practice')).json()) as { rocks: number[] };
+    const again = (await (await app.request('/api/practice')).json()) as {
+      rocks: number[];
+    };
     expect(again.rocks).not.toEqual(p.rocks);
     const d = await init();
     expect(d.stats.players).toBe(0);

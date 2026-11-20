@@ -141,6 +141,7 @@ const Game = ({ data }: { data: InitResponse }) => {
     data.run.shots.length ? null : totalCharts(puzzle.k)
   );
   const [ghost, setGhost] = useState<number | null>(null);
+  const [clear, setClear] = useState<Uint8Array | null>(null);
   const flashKey = useRef(0);
   const meter = useRef<FogMeter | null>(null);
 
@@ -151,7 +152,11 @@ const Game = ({ data }: { data: InitResponse }) => {
     meter.current ??= new FogMeter(puzzle.k);
     meter.current
       .count(shots.map((s) => ({ port: s.port, outcome: s.outcome })))
-      .then((n) => live && setCharts(n))
+      .then((n) => {
+        if (!live) return;
+        setCharts(n);
+        setClear(meter.current?.clearCells() ?? null);
+      })
       .catch(() => undefined);
     return () => {
       live = false;
@@ -330,7 +335,7 @@ const Game = ({ data }: { data: InitResponse }) => {
       return 'Only one rock layout fits your beams now. Find it — drop your buoys.';
     return buoys.length
       ? 'Keep reading beams, or move buoys until you’re sure.'
-      : 'Tap the water to drop a buoy where you think a rock hides.';
+      : 'Fog burns off squares your beams prove empty. The rocks hide in what’s left — fire more, or tap the water to drop a buoy.';
   })();
 
   const closeCoach = () => {
@@ -413,6 +418,7 @@ const Game = ({ data }: { data: InitResponse }) => {
             ) : (
               <div style={{ width: size, height: size }}>
                 <Bay
+                  clear={done ? null : clear}
                   lamps={lamps}
                   shots={done ? done.shots : shots}
                   buoys={done ? done.buoys : buoys}

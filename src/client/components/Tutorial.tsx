@@ -131,7 +131,7 @@ export const Tutorial = ({ onDone }: { onDone: () => void }) => {
 
   const hint = (() => {
     if (solved)
-      return 'Found it! That’s the whole game: shine lamps, read ✕ / bends / ↺, then mark the rocks. Fewer beams = better score.';
+      return 'Found it! In the real game the fog also burns off every square your beams prove is empty — the rocks hide in what’s left. Fewer beams = better score.';
     if (note) return note;
     if (placing) return 'Tap the water where the two ✕ lines cross.';
     return step.ask;

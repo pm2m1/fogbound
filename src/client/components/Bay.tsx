@@ -62,43 +62,80 @@ const inward = (port: number): [number, number] => {
 
 /* ------------------------------------------------------------------ */
 
-const Fog = memo(({ thin }: { thin: boolean }) => {
-  const tex = fogTexture();
-  return (
-    <g
-      className={`fog ${thin ? 'fog-thin' : ''}`}
-      pointerEvents="none"
-      clipPath="url(#water)"
-    >
-      {tex ? (
-        <>
-          <image
-            className="fog-layer l1"
-            href={tex}
-            x="-1"
-            y="-1"
-            width="12"
-            height="12"
-            preserveAspectRatio="none"
-          />
-          <image
-            className="fog-layer l2"
-            href={tex}
-            x="-1.5"
-            y="-1.5"
-            width="13"
-            height="13"
-            preserveAspectRatio="none"
-            transform="rotate(90 5 5)"
-          />
-        </>
-      ) : (
-        <ellipse cx="5" cy="5" rx="4.2" ry="2.6" fill="url(#fogPuff)" />
-      )}
-      <rect x="1" y="1" width={N} height={N} fill="url(#vignette)" />
-    </g>
-  );
-});
+const Fog = memo(
+  ({ thin, clear }: { thin: boolean; clear: Uint8Array | null }) => {
+    const tex = fogTexture();
+    return (
+      <>
+        <defs>
+          <filter id="clearBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="0.1" />
+          </filter>
+          <mask
+            id="fogMask"
+            maskUnits="userSpaceOnUse"
+            x="0"
+            y="0"
+            width="10"
+            height="10"
+          >
+            <rect x="0" y="0" width="10" height="10" fill="white" />
+            <g filter="url(#clearBlur)">
+              {Array.from({ length: N * N }, (_, c) => {
+                const [x, y] = cellXY(c);
+                return (
+                  <rect
+                    key={c}
+                    className={`clear-cell ${clear?.[c] ? 'on' : ''}`}
+                    x={x - 0.02}
+                    y={y - 0.02}
+                    width={1.04}
+                    height={1.04}
+                    fill="black"
+                  />
+                );
+              })}
+            </g>
+          </mask>
+        </defs>
+        <g
+          className={`fog ${thin ? 'fog-thin' : ''}`}
+          pointerEvents="none"
+          clipPath="url(#water)"
+          mask="url(#fogMask)"
+        >
+          <rect className="fog-base" x="1" y="1" width={N} height={N} />
+          {tex ? (
+            <>
+              <image
+                className="fog-layer l1"
+                href={tex}
+                x="-1"
+                y="-1"
+                width="12"
+                height="12"
+                preserveAspectRatio="none"
+              />
+              <image
+                className="fog-layer l2"
+                href={tex}
+                x="-1.5"
+                y="-1.5"
+                width="13"
+                height="13"
+                preserveAspectRatio="none"
+                transform="rotate(90 5 5)"
+              />
+            </>
+          ) : (
+            <ellipse cx="5" cy="5" rx="4.2" ry="2.6" fill="url(#fogPuff)" />
+          )}
+          <rect x="1" y="1" width={N} height={N} fill="url(#vignette)" />
+        </g>
+      </>
+    );
+  }
+);
 Fog.displayName = 'Fog';
 
 const Rock = ({ cell, delay }: { cell: number; delay: number }) => {
@@ -314,6 +351,8 @@ type Props = {
   ghost?: number | null;
   /** pulse this lamp to draw the eye (tutorial) */
   beckon?: number | null;
+  /** cells proven rock-free: the fog burns off there */
+  clear?: Uint8Array | null;
   label: string;
 };
 
@@ -334,6 +373,7 @@ export const Bay = ({
   checks = null,
   ghost = null,
   beckon = null,
+  clear = null,
   label,
 }: Props) => {
   const markers = useMemo(() => markersFor(shots), [shots]);
@@ -542,7 +582,7 @@ export const Bay = ({
           />
         ))}
 
-      <Fog thin={revealed} />
+      <Fog thin={revealed} clear={revealed ? null : clear} />
 
       {/* water tap targets */}
       {interactive &&
