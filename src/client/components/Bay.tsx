@@ -353,6 +353,8 @@ type Props = {
   beckon?: number | null;
   /** cells proven rock-free: the fog burns off there */
   clear?: Uint8Array | null;
+  /** only draw true paths for the first N beams (guided practice) */
+  pathLimit?: number;
   label: string;
 };
 
@@ -374,6 +376,7 @@ export const Bay = ({
   ghost = null,
   beckon = null,
   clear = null,
+  pathLimit = Infinity,
   label,
 }: Props) => {
   const markers = useMemo(() => markersFor(shots), [shots]);
@@ -384,12 +387,12 @@ export const Bay = ({
   const paths = useMemo(
     () =>
       (showPaths || pathRocks) && traceRocks
-        ? shots.map((s) => ({
+        ? shots.slice(0, pathLimit).map((s) => ({
             s,
             pts: tracePath(s.port, traceRocks).path.map(pointXY),
           }))
         : [],
-    [showPaths, pathRocks, traceRocks, shots]
+    [showPaths, pathRocks, traceRocks, shots, pathLimit]
   );
   const ghostPts = useMemo(
     () =>

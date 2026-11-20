@@ -37,7 +37,17 @@ const outcomeText = (o: number) =>
  * Unlimited practice fogs: unranked, played entirely on the device. They never touch
  * the daily puzzle, scores, streaks or the shared lamps.
  */
-export const FreePlay = ({ onExit }: { onExit: () => void }) => {
+const GUIDED_BEAMS = 3;
+
+export const FreePlay = ({
+  onExit,
+  guided = false,
+}: {
+  onExit: () => void;
+  /** first fog after the lesson: the first few beams show their true path */
+  guided?: boolean;
+}) => {
+  const [guidedOn, setGuidedOn] = useState(guided);
   const [fog, setFog] = useState<PracticeResponse | null>(null);
   const [shots, setShots] = useState<Run['shots']>([]);
   const [buoys, setBuoys] = useState<number[]>([]);
@@ -85,6 +95,7 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
     setNote(null);
     setGhost(null);
     setClear(null);
+    setGuidedOn(false);
     setView('board');
     setNotes(null);
     setLogState('idle');
@@ -224,6 +235,18 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
       return wrong === 0
         ? `Every rock charted for ${fmtHalf(costHalf)} — par was ${fog.par}.${costHalf > (fog.par + 2) * 2 ? ' Open the beam log to see which beams were wasted.' : ''}`
         : `${wrong} buoy${wrong > 1 ? 's' : ''} on open water. The fog has lifted — see how the beams really ran.`;
+    if (
+      guidedOn &&
+      selected === null &&
+      note &&
+      shots.length >= 1 &&
+      shots.length <= GUIDED_BEAMS
+    )
+      return `${note} The line shows its real path${
+        shots.length === GUIDED_BEAMS
+          ? ' — from now on the fog hides the paths.'
+          : ` (guided beam ${shots.length} of ${GUIDED_BEAMS}).`
+      }`;
     if (note) return note;
     if (selected !== null)
       return `${lampShort(selected)}: fire to send a beam into the fog.`;
@@ -235,7 +258,9 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
       return `Your buoys explain ${explained} of ${checks.size} beams. Tap a ✗ lamp to compare.`;
     }
     if (shots.length === 0)
-      return 'Practice fog — nothing at stake. Tap a lamp to aim.';
+      return guidedOn
+        ? `Guided fog: your first ${GUIDED_BEAMS} beams show the path they really took. Tap a lamp, then Fire.`
+        : 'Practice fog — nothing at stake. Tap a lamp to aim.';
     return 'Fog burns off squares your beams prove empty. The rocks hide in what’s left — fire more, or drop buoys.';
   })();
 
@@ -245,7 +270,7 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
         <div>
           <h1 className="wordmark small">Practice fog</h1>
           <div className="sub">
-            Unranked · {fog.k} rocks · par {fog.par}
+            {guidedOn ? 'Guided' : 'Unranked'} · {fog.k} rocks · par {fog.par}
             {count > 0 && ` · ${count} charted`}
           </div>
         </div>
@@ -293,6 +318,8 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
               <div style={{ width: size, height: size }}>
                 <Bay
                   clear={done ? null : clear}
+                  pathRocks={guidedOn && !done ? fog.rocks : null}
+                  pathLimit={guidedOn && !done ? GUIDED_BEAMS : Infinity}
                   lamps={DARK}
                   shots={shots}
                   buoys={buoys}

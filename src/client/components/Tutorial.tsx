@@ -75,7 +75,14 @@ const DARK: Lamp[] = Array.from({ length: PORTS }, (_, p) => ({
   borrows: 0,
 }));
 
-export const Tutorial = ({ onDone }: { onDone: () => void }) => {
+export const Tutorial = ({
+  onDone,
+  onGuided,
+}: {
+  onDone: () => void;
+  /** recommended next step: a practice fog whose first beams show their path */
+  onGuided: () => void;
+}) => {
   const [stepIdx, setStepIdx] = useState(0);
   const [fired, setFired] = useState(0); // lamps fired within this step
   const [shots, setShots] = useState<Run['shots']>([]);
@@ -131,7 +138,7 @@ export const Tutorial = ({ onDone }: { onDone: () => void }) => {
 
   const hint = (() => {
     if (solved)
-      return 'Found it! In the real game the fog also burns off every square your beams prove is empty — the rocks hide in what’s left. Fewer beams = better score.';
+      return 'Found it! In the real game the fog also burns off every square your beams prove is empty — the rocks hide in what’s left. Fewer beams = better score. Next: a practice fog where your first beams show their real path.';
     if (note) return note;
     if (placing) return 'Tap the water where the two ✕ lines cross.';
     return step.ask;
@@ -186,12 +193,23 @@ export const Tutorial = ({ onDone }: { onDone: () => void }) => {
       <div className="dock">
         <div className="actions">
           {solved ? (
-            <button
-              className="btn btn-lamp"
-              onClick={() => (journey.interaction('tutorial-done'), onDone())}
-            >
-              Enter tonight’s fog
-            </button>
+            <>
+              <button
+                className="btn btn-ghost"
+                onClick={() => (journey.interaction('tutorial-done'), onDone())}
+              >
+                Tonight’s fog
+              </button>
+              <button
+                className="btn btn-lamp"
+                onClick={() => (
+                  journey.interaction('tutorial-guided'),
+                  onGuided()
+                )}
+              >
+                Guided practice
+              </button>
+            </>
           ) : stepDone && !isTest ? (
             <button className="btn btn-lamp" onClick={next}>
               {stepIdx === STEPS.length - 2 ? 'Try it yourself' : 'Next rule'}

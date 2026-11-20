@@ -132,6 +132,7 @@ const Game = ({ data }: { data: InitResponse }) => {
   const [me, setMe] = useState<MyProfile | null>(data.me);
   const [coach, setCoach] = useState(false);
   const [free, setFree] = useState(false);
+  const [guided, setGuided] = useState(false);
   const [armedFor, setArmedFor] = useState<string | null>(null);
   const [practice, setPractice] = useState(
     () => !readSeen() && !data.result && data.run.shots.length === 0
@@ -358,8 +359,20 @@ const Game = ({ data }: { data: InitResponse }) => {
   const done = phase.kind === 'done' ? phase.result : null;
   const totalBuoyers = stats.players + (done && !done.ranked ? 1 : 0);
 
-  if (practice) return <Tutorial onDone={finishPractice} />;
-  if (free) return <FreePlay onExit={() => setFree(false)} />;
+  if (practice)
+    return (
+      <Tutorial
+        onDone={finishPractice}
+        onGuided={() => (finishPractice(), setGuided(true), setFree(true))}
+      />
+    );
+  if (free)
+    return (
+      <FreePlay
+        guided={guided}
+        onExit={() => (setFree(false), setGuided(false))}
+      />
+    );
 
   return (
     <main className={`game ${done ? 'is-done' : ''}`}>
