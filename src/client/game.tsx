@@ -349,13 +349,24 @@ const Game = ({ data }: { data: InitResponse }) => {
             {!ranked && ' · practice'}
           </div>
         </div>
-        <button
-          className="icon-btn"
-          aria-label="How to play"
-          onClick={() => (setCoach(true), journey.interaction('help'))}
-        >
-          ?
-        </button>
+        <div className="topbar-actions">
+          <button
+            className="btn btn-ghost small"
+            onClick={() => (
+              setFree(true),
+              journey.interaction('practice-header')
+            )}
+          >
+            Practice
+          </button>
+          <button
+            className="icon-btn"
+            aria-label="How to play"
+            onClick={() => (setCoach(true), journey.interaction('help'))}
+          >
+            ?
+          </button>
+        </div>
       </header>
 
       {done && (

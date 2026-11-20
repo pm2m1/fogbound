@@ -74,7 +74,7 @@ describe('Fogbound server', () => {
     expect(todaysPost().stickied).toBe(true);
     expect(todaysPost().title).toMatch(/^Fogbound #1 · Monday: 3 rocks/);
     expect(
-      comments.some((c) => c.distinguished && c.body.includes('3 rocks hide'))
+      comments.some((c) => c.distinguished && c.body.includes('3 rocks are hidden'))
     ).toBe(true);
 
     const puzzle = (await getPuzzle(MONDAY))!;

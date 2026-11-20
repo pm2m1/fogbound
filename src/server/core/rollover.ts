@@ -69,15 +69,20 @@ export const ensurePuzzle = async (day: number): Promise<Puzzle> => {
 
 const howToPlay = (p: Puzzle): string =>
   [
-    `**${p.k} rocks hide in tonight's fog.** Tap a lamp on the shore to send a beam in, then drop ${p.k} buoys where you think the rocks are.`,
+    `**How to play — ${p.k} rocks are hidden in the fog. Find them using as few beams as you can.**`,
     '',
-    '- A beam that hits a rock head-on is **lost**.',
-    '- A beam that passes a rock diagonally **bends** away from it.',
-    '- Squeezed between two rocks, or grazing one at the shore, it **comes straight back**.',
+    '1. Tap a lamp on the shore, then **Fire**. A beam goes straight in.',
+    '2. Read what the lamp shows:',
+    '    - **✕** — the beam hit a rock. Usually the rock is on that straight line (unless the beam bent first).',
+    '    - **Matching numbers** (1 and 1) — it went in at one and came out at the other. A rock just ahead and to one side turned it 90° away.',
+    '    - **↺** — it came straight back (squeezed between two rocks, or a rock right next to the shore).',
+    `3. Tap the water to drop ${p.k} buoys where the rocks are, then **Chart the fog**.`,
     '',
-    `Firing a lamp costs **1**. Lit lamps stay lit for ${FUEL} borrows — borrow another keeper's beam for **½** (up to ${BORROW_CAP} a day) and they get the credit. Par is **${p.par}**.`,
+    '**Easiest trick:** fire a top lamp and a side lamp. If both show ✕, check the square where the two lines cross.',
     '',
-    'Spotted a great lamp? Tell the others which one — no rock coordinates, please.',
+    `Each beam costs **1**; borrowing a lamp another keeper already lit costs **½** (up to ${BORROW_CAP} a day, each lamp lights ${FUEL} borrows) and they get the credit. Each wrong buoy costs **5**. Par is **${p.par}**.`,
+    '',
+    'New? Tap **?** in the game for the 1-minute lesson, or **Practice** for unlimited free fogs. Please no rock coordinates in comments.',
   ].join('\n');
 
 /** Idempotent: today's post exists, is pinned, and yesterday's gets its results. */

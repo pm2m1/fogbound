@@ -1,32 +1,71 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Lamp, Run } from '../../shared/api';
-import { PORTS, explains, trace } from '../../shared/beam';
+import { PORTS, trace } from '../../shared/beam';
 import { Bay, type Flash } from './Bay';
 import { BoardFrame } from './BoardFrame';
 import { journey } from '../lib/platform';
 
-/** Practice fog: two rocks that demonstrate every rule in three beams. */
-const ROCKS = [12, 14]; // row 2 col 5, row 2 col 7
-const SCRIPT = [
+/**
+ * The lesson. Rocks are VISIBLE while each rule is taught (one rule per step, the
+ * beam visibly travels), then a tiny test with one hidden rock teaches the most
+ * useful trick: two ✕ lines cross on a rock.
+ */
+type Step = {
+  title: string;
+  rocks: number[];
+  visible: boolean;
+  lamps: number[];
+  ask: string;
+  after: string[];
+};
+
+const ROCK_A = 3 * 8 + 4; // row 4, col 5
+const ROCK_B = 3 * 8 + 6; // row 4, col 7
+const HIDDEN = 5 * 8 + 2; // row 6, col 3
+
+const STEPS: Step[] = [
   {
-    port: 4,
-    ask: 'Two rocks hide in this practice fog. Tap the glowing lamp to shine a beam in.',
-    after:
-      'Lost! It hit a rock head-on — so a rock sits somewhere on that line.',
+    title: 'Rule 1 of 3',
+    rocks: [ROCK_A],
+    visible: true,
+    lamps: [4],
+    ask: 'This is a rock. In the real game it hides in fog. Tap the glowing lamp to shine at it.',
+    after: [
+      'The beam hit the rock and died — the lamp now shows ✕. Rule 1: ✕ means the beam hit a rock — usually one on that straight line.',
+    ],
   },
   {
-    port: 3,
-    ask: 'Now try the lamp next to it.',
-    after:
-      'It grazed a rock on the diagonal and bent away — light came out at the lamp marked 1.',
+    title: 'Rule 2 of 3',
+    rocks: [ROCK_A],
+    visible: true,
+    lamps: [3],
+    ask: 'Now the lamp next to it. Watch the beam as it passes the rock.',
+    after: [
+      'It turned 90° away from the rock and came out on the left. Rule 2: a rock just ahead and to one side bends the beam away. Matching numbers mark where a beam went in and came out.',
+    ],
   },
   {
-    port: 5,
-    ask: 'One more — the glowing lamp.',
-    after:
-      'Squeezed between two rocks, it came straight back (↺). A rock right beside a lamp does that too.',
+    title: 'Rule 3 of 3',
+    rocks: [ROCK_A, ROCK_B],
+    visible: true,
+    lamps: [5],
+    ask: 'Two rocks now. Shine the glowing lamp between them.',
+    after: [
+      'Squeezed between two rocks, it bounced straight back. Rule 3: ↺ means it came back.',
+    ],
   },
-] as const;
+  {
+    title: 'Test',
+    rocks: [HIDDEN],
+    visible: false,
+    lamps: [2, 3 * 8 + 5],
+    ask: 'Your turn. One rock is hidden in the fog. Fire the glowing lamp.',
+    after: [
+      '✕ — so the rock is somewhere in that column. Now fire the next glowing lamp.',
+      '✕ again — so it’s somewhere in that row too.',
+    ],
+  },
+];
 
 const DARK: Lamp[] = Array.from({ length: PORTS }, (_, p) => ({
   port: p,
@@ -37,74 +76,75 @@ const DARK: Lamp[] = Array.from({ length: PORTS }, (_, p) => ({
 }));
 
 export const Tutorial = ({ onDone }: { onDone: () => void }) => {
-  const [step, setStep] = useState(0);
+  const [stepIdx, setStepIdx] = useState(0);
+  const [fired, setFired] = useState(0); // lamps fired within this step
   const [shots, setShots] = useState<Run['shots']>([]);
   const [buoys, setBuoys] = useState<number[]>([]);
   const [flash, setFlash] = useState<Flash | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const key = useRef(0);
 
-  const firing = step < SCRIPT.length;
-  const solved =
-    buoys.length === ROCKS.length && ROCKS.every((r) => buoys.includes(r));
-  const checks = useMemo(
-    () =>
-      !firing && buoys.length === ROCKS.length
-        ? new Map(shots.map((s) => [s.port, explains(buoys, s)] as const))
-        : null,
-    [firing, buoys, shots]
-  );
+  const step = STEPS[stepIdx]!;
+  const isTest = !step.visible;
+  const stepDone = fired >= step.lamps.length;
+  const placing = isTest && stepDone;
+  const solved = placing && buoys.length === 1 && buoys[0] === HIDDEN;
+  const beckon = stepDone ? null : step.lamps[fired]!;
 
   const onLamp = (p: number) => {
-    if (!firing) return;
-    const want = SCRIPT[step]!.port;
-    if (p !== want) {
+    if (stepDone) return;
+    if (p !== beckon) {
       setNote('Tap the glowing lamp.');
       return;
     }
-    const outcome = trace(p, ROCKS);
+    const outcome = trace(p, step.rocks);
     setShots((s) => [...s, { port: p, outcome, borrowed: false }]);
-    key.current++;
-    setFlash({ port: p, outcome, key: key.current });
-    setNote(SCRIPT[step]!.after);
-    setStep((s) => s + 1);
-    if (step === 0) journey.interaction('tutorial-start');
+    if (isTest) {
+      key.current++;
+      setFlash({ port: p, outcome, key: key.current });
+    }
+    setNote(step.after[fired] ?? null);
+    setFired((f) => f + 1);
+    if (stepIdx === 0) journey.interaction('tutorial-start');
+  };
+
+  const next = () => {
+    const n = stepIdx + 1;
+    const nextStep = STEPS[n]!;
+    // keep earlier beams only while the rocks are the same (rule 1 -> rule 2)
+    if (nextStep.rocks.join() !== step.rocks.join()) setShots([]);
+    setStepIdx(n);
+    setFired(0);
+    setFlash(null);
+    setNote(null);
   };
 
   const onCell = (c: number) => {
-    if (firing || solved) return;
-    setNote(null);
-    setBuoys((b) =>
-      b.includes(c)
-        ? b.filter((x) => x !== c)
-        : b.length < ROCKS.length
-          ? [...b, c]
-          : b
+    if (!placing || solved) return;
+    setBuoys([c]);
+    setNote(
+      c === HIDDEN
+        ? null
+        : 'Not there. Find the cell where the top ✕ column meets the left ✕ row.'
     );
   };
 
   const hint = (() => {
     if (solved)
-      return 'Both rocks charted. Tonight’s fog hides 4 — and you won’t see the beams’ paths. Fewer beams, better score.';
-    if (note && firing) return note;
-    if (firing) return SCRIPT[step]!.ask;
-    if (buoys.length < ROCKS.length)
-      return `${note ? `${note} ` : ''}Now tap the water to drop 2 buoys where the rocks are.`;
-    return 'Not quite — a ✗ means your buoys don’t explain that beam. Tap a buoy to lift it.';
+      return 'Found it! That’s the whole game: shine lamps, read ✕ / bends / ↺, then mark the rocks. Fewer beams = better score.';
+    if (note) return note;
+    if (placing) return 'Tap the water where the two ✕ lines cross.';
+    return step.ask;
   })();
+
+  const showRocks = step.visible ? step.rocks : solved ? [HIDDEN] : null;
 
   return (
     <main className="game tutorial">
       <header className="topbar">
         <div>
-          <h1 className="wordmark small">Practice fog</h1>
-          <div className="sub">
-            {firing
-              ? `Beam ${step + 1} of 3`
-              : solved
-                ? 'Done'
-                : 'Drop 2 buoys'}
-          </div>
+          <h1 className="wordmark small">Lesson</h1>
+          <div className="sub">{solved ? 'Done' : step.title}</div>
         </div>
         <button
           className="btn btn-ghost small"
@@ -122,18 +162,21 @@ export const Tutorial = ({ onDone }: { onDone: () => void }) => {
                 lamps={DARK}
                 shots={shots}
                 buoys={buoys}
-                rocks={solved ? ROCKS : null}
-                pathRocks={ROCKS}
-                flash={flash}
-                beckon={firing ? SCRIPT[step]!.port : null}
+                rocks={showRocks}
+                showPaths={Boolean(showRocks)}
+                flash={isTest && !solved ? flash : null}
+                beckon={beckon}
                 interactive={!solved}
                 onLamp={onLamp}
                 onCell={onCell}
-                checks={checks}
-                label="Practice fog with two hidden rocks"
+                label={
+                  step.visible
+                    ? 'Lesson: the fog is lifted so you can see the rocks'
+                    : 'Lesson test: one rock hidden'
+                }
               />
             </div>
-            <p className="hint" aria-live="polite">
+            <p className="hint lesson-hint" aria-live="polite">
               {hint}
             </p>
           </div>
@@ -142,13 +185,24 @@ export const Tutorial = ({ onDone }: { onDone: () => void }) => {
 
       <div className="dock">
         <div className="actions">
-          <button
-            className="btn btn-lamp"
-            disabled={!solved}
-            onClick={() => (journey.interaction('tutorial-done'), onDone())}
-          >
-            {solved ? 'Enter tonight’s fog' : 'Chart the practice fog'}
-          </button>
+          {solved ? (
+            <button
+              className="btn btn-lamp"
+              onClick={() => (journey.interaction('tutorial-done'), onDone())}
+            >
+              Enter tonight’s fog
+            </button>
+          ) : stepDone && !isTest ? (
+            <button className="btn btn-lamp" onClick={next}>
+              {stepIdx === STEPS.length - 2 ? 'Try it yourself' : 'Next rule'}
+            </button>
+          ) : (
+            <button className="btn btn-lamp" disabled>
+              {placing
+                ? 'Tap the water to drop a buoy'
+                : 'Tap the glowing lamp'}
+            </button>
+          )}
         </div>
       </div>
     </main>
