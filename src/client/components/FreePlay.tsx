@@ -46,6 +46,7 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
   const [ghost, setGhost] = useState<number | null>(null);
   const [done, setDone] = useState(false);
   const [count, setCount] = useState(0);
+  const [armedFor, setArmedFor] = useState<string | null>(null);
   const key = useRef(0);
   const meter = useRef<FogMeter | null>(null);
 
@@ -161,6 +162,15 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
   };
 
   const chart = () => {
+    const bad = checks ? checks.size - explained : 0;
+    if (bad > 0 && armedFor !== buoys.join()) {
+      setArmedFor(buoys.join());
+      setNote(
+        `Careful: your buoys contradict ${bad} beam${bad > 1 ? 's' : ''} (the lamps with a red badge). Tap one to see why, or chart anyway.`
+      );
+      return;
+    }
+    setArmedFor(null);
     setDone(true);
     setSelected(null);
     setGhost(null);
@@ -286,7 +296,7 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
               disabled={buoys.length !== fog.k || shots.length === 0}
               onClick={chart}
             >
-              Chart the fog
+              {armedFor === buoys.join() ? 'Chart anyway' : 'Chart the fog'}
             </button>
           )}
         </div>

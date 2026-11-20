@@ -132,6 +132,7 @@ const Game = ({ data }: { data: InitResponse }) => {
   const [me, setMe] = useState<MyProfile | null>(data.me);
   const [coach, setCoach] = useState(false);
   const [free, setFree] = useState(false);
+  const [armedFor, setArmedFor] = useState<string | null>(null);
   const [practice, setPractice] = useState(
     () => !readSeen() && !data.result && data.run.shots.length === 0
   );
@@ -274,6 +275,15 @@ const Game = ({ data }: { data: InitResponse }) => {
 
   const chart = async () => {
     if (busy || buoys.length !== puzzle.k) return;
+    const bad = checks ? checks.size - explained : 0;
+    if (bad > 0 && armedFor !== buoys.join()) {
+      setArmedFor(buoys.join());
+      setNote(
+        `Careful: your buoys contradict ${bad} beam${bad > 1 ? 's' : ''} (the lamps with a red badge). Tap one to see why, or chart anyway.`
+      );
+      return;
+    }
+    setArmedFor(null);
     setBusy(true);
     try {
       const r = await api.submit(
@@ -494,7 +504,7 @@ const Game = ({ data }: { data: InitResponse }) => {
                   }
                   onClick={() => void chart()}
                 >
-                  Chart the fog
+                  {armedFor === buoys.join() ? 'Chart anyway' : 'Chart the fog'}
                 </button>
               </div>
             )}
