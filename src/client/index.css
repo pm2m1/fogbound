@@ -622,7 +622,7 @@ button {
 
 @media (min-width: 620px) and (max-height: 640px) {
   .splash {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     grid-template-rows: auto 1fr;
     grid-template-areas: 'board head' 'board info';
     align-items: center;

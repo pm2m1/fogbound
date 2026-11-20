@@ -79,7 +79,7 @@ const Splash = ({ data }: { data: InitResponse }) => {
       </header>
 
       <div className="splash-board">
-        <BoardFrame max={420}>
+        <BoardFrame max={560}>
           {(size) => (
             <div style={{ width: size, height: size }}>
               <Bay
