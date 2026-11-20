@@ -186,6 +186,13 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
       );
       return;
     }
+    if (charts !== null && charts > 2 && armedFor !== buoys.join()) {
+      setArmedFor(buoys.join());
+      setNote(
+        `${fmtCount(charts)} rock layouts still fit your beams, so this is a guess. A wrong buoy costs 5, a beam only 1 — fire more lamps, or chart anyway.`
+      );
+      return;
+    }
     setArmedFor(null);
     setDone(true);
     setSelected(null);

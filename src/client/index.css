@@ -1229,3 +1229,10 @@ button {
   color: var(--muted);
   font-size: 14px;
 }
+
+.beamlog-warn {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #ffb38a;
+}

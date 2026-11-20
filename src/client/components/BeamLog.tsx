@@ -63,6 +63,12 @@ export const BeamLog = ({
           </li>
         ))}
       </ol>
+      {last && last.after > 1 && (
+        <p className="beamlog-warn">
+          You charted with {fmtCount(last.after)} layouts still possible — that
+          was a guess. Keep firing until the fog meter reads 1.
+        </p>
+      )}
       <p className="beamlog-foot">
         Expert line ({expertLine.length}):{' '}
         {expertLine.map(lampShort).join(' · ')}
