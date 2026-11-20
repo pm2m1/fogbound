@@ -1222,3 +1222,10 @@ button {
     overflow-y: auto;
   }
 }
+
+.beamlog-wait {
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 14px;
+}

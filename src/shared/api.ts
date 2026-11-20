@@ -112,4 +112,8 @@ export type PracticeResponse = {
   line: number[];
 };
 
+/** Beam log for a finished practice fog. */
+export type PracticeLogRequest = { rocks: number[]; ports: number[] };
+export type PracticeLogResponse = { type: 'practice-log'; notes: BeamNote[] };
+
 export type ErrorResponse = { status: 'error'; message: string };

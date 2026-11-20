@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Lamp, PracticeResponse, Run } from '../../shared/api';
+import type { BeamNote } from '../../shared/beam';
 import {
   FogMeter,
   LOST,
@@ -15,6 +16,7 @@ import { fmtCount, lampShort } from '../lib/geometry';
 import { journey } from '../lib/platform';
 import { Bay, markersFor, type Flash } from './Bay';
 import { BoardFrame } from './BoardFrame';
+import { BeamLog } from './BeamLog';
 
 const DARK: Lamp[] = Array.from({ length: PORTS }, (_, p) => ({
   port: p,
@@ -48,6 +50,11 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
   const [done, setDone] = useState(false);
   const [count, setCount] = useState(0);
   const [armedFor, setArmedFor] = useState<string | null>(null);
+  const [view, setView] = useState<'board' | 'log'>('board');
+  const [notes, setNotes] = useState<BeamNote[] | null>(null);
+  const [logState, setLogState] = useState<'idle' | 'loading' | 'error'>(
+    'idle'
+  );
   const key = useRef(0);
   const meter = useRef<FogMeter | null>(null);
 
@@ -78,6 +85,9 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
     setNote(null);
     setGhost(null);
     setClear(null);
+    setView('board');
+    setNotes(null);
+    setLogState('idle');
     setDone(false);
     void fetchFog();
   };
@@ -184,11 +194,28 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
     journey.interaction('practice-charted');
   };
 
+  const openLog = () => {
+    setView('log');
+    journey.interaction('practice-beam-log');
+    if (!fog || notes || logState === 'loading') return;
+    setLogState('loading');
+    api
+      .practiceLog(
+        fog.rocks,
+        shots.map((s) => s.port)
+      )
+      .then((r) => {
+        setNotes(r.notes);
+        setLogState('idle');
+      })
+      .catch(() => setLogState('error'));
+  };
+
   const explained = checks ? [...checks.values()].filter(Boolean).length : 0;
   const hint = (() => {
     if (done)
       return wrong === 0
-        ? `Every rock charted for ${fmtHalf(costHalf)} — par was ${fog.par}.`
+        ? `Every rock charted for ${fmtHalf(costHalf)} — par was ${fog.par}.${costHalf > (fog.par + 2) * 2 ? ' Open the beam log to see which beams were wasted.' : ''}`
         : `${wrong} buoy${wrong > 1 ? 's' : ''} on open water. The fog has lifted — see how the beams really ran.`;
     if (note) return note;
     if (selected !== null)
@@ -220,31 +247,65 @@ export const FreePlay = ({ onExit }: { onExit: () => void }) => {
         </button>
       </header>
 
+      {done && (
+        <div className="seg" role="tablist" aria-label="Practice view">
+          <button
+            role="tab"
+            aria-selected={view === 'board'}
+            onClick={() => setView('board')}
+          >
+            The fog lifted
+          </button>
+          <button role="tab" aria-selected={view === 'log'} onClick={openLog}>
+            Beam log
+          </button>
+        </div>
+      )}
+
       <BoardFrame max={640} reserve={56}>
         {(size) => (
           <div className="stage" style={{ width: size }}>
-            <div style={{ width: size, height: size }}>
-              <Bay
-                clear={done ? null : clear}
-                lamps={DARK}
-                shots={shots}
-                buoys={buoys}
-                selected={selected}
-                rocks={done ? fog.rocks : null}
-                showPaths={done}
-                flash={done ? null : flash}
-                interactive={!done}
-                onLamp={onLamp}
-                onCell={onCell}
-                checks={checks}
-                ghost={ghost}
-                label={
-                  done
-                    ? 'The practice fog has lifted'
-                    : `Practice fog, ${fog.k} rocks hidden`
-                }
-              />
-            </div>
+            {done && view === 'log' ? (
+              notes ? (
+                <BeamLog notes={notes} expertLine={fog.line} size={size} />
+              ) : (
+                <div
+                  className="beamlog beamlog-wait"
+                  style={{ width: size, height: size }}
+                >
+                  {logState === 'error' ? (
+                    <button className="btn btn-ghost small" onClick={openLog}>
+                      Couldn’t grade — try again
+                    </button>
+                  ) : (
+                    'Grading your beams…'
+                  )}
+                </div>
+              )
+            ) : (
+              <div style={{ width: size, height: size }}>
+                <Bay
+                  clear={done ? null : clear}
+                  lamps={DARK}
+                  shots={shots}
+                  buoys={buoys}
+                  selected={selected}
+                  rocks={done ? fog.rocks : null}
+                  showPaths={done}
+                  flash={done ? null : flash}
+                  interactive={!done}
+                  onLamp={onLamp}
+                  onCell={onCell}
+                  checks={checks}
+                  ghost={ghost}
+                  label={
+                    done
+                      ? 'The practice fog has lifted'
+                      : `Practice fog, ${fog.k} rocks hidden`
+                  }
+                />
+              </div>
+            )}
             <p className="hint" aria-live="polite">
               {hint}
             </p>

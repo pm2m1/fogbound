@@ -246,12 +246,26 @@ export const mockCall = async <T>(path: string, body?: unknown): Promise<T> => {
       100_000 + Math.floor(Math.random() * 6),
       Math.random().toString(36)
     );
-    return {
+    const r = {
       type: 'practice',
       k: p.k,
       par: p.par,
       rocks: p.rocks,
       line: p.line ?? [],
+    };
+    (globalThis as { __fogPractice?: unknown }).__fogPractice = r; // QA bot hook
+    return r as T;
+  }
+  if (path === '/api/practice/log') {
+    const { rocks, ports } = body as { rocks: number[]; ports: number[] };
+    const shots = ports.map((port) => ({
+      port,
+      outcome: trace(port, rocks),
+      borrowed: false,
+    }));
+    return {
+      type: 'practice-log',
+      notes: analyzeShots(buildSpace(rocks.length), shots),
     } as T;
   }
   throw new Error(`mock: unknown ${path}`);

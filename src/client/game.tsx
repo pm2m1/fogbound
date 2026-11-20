@@ -419,7 +419,11 @@ const Game = ({ data }: { data: InitResponse }) => {
             {(size) => (
               <div className="stage" style={{ width: size }}>
                 {done && view === 'log' ? (
-                  <BeamLog result={done} size={size} />
+                  <BeamLog
+                    notes={done.notes}
+                    expertLine={done.expertLine}
+                    size={size}
+                  />
                 ) : (
                   <div style={{ width: size, height: size }}>
                     <Bay

@@ -304,4 +304,37 @@ describe('practice fogs', () => {
     expect(d.stats.players).toBe(0);
     expect(d.run.shots).toHaveLength(0);
   }, 30_000);
+
+  it('grades a finished practice fog and rejects junk', async () => {
+    setDay(MONDAY + 1);
+    await rollover();
+    usePost();
+    as(1);
+    const post = (body: unknown) =>
+      app.request('/api/practice/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    const p = (await (await app.request('/api/practice')).json()) as {
+      rocks: number[];
+      line: number[];
+    };
+    const r = await post({ rocks: p.rocks, ports: p.line });
+    expect(r.status).toBe(200);
+    const log = (await r.json()) as {
+      notes: { after: number; skill: number }[];
+    };
+    expect(log.notes).toHaveLength(p.line.length);
+    expect(log.notes.at(-1)!.after).toBe(1);
+    for (const bad of [
+      {},
+      { rocks: [1, 1, 2, 3], ports: [0] },
+      { rocks: p.rocks, ports: [] },
+      { rocks: p.rocks, ports: [0, 0] },
+      { rocks: p.rocks, ports: [99] },
+      { rocks: [1, 2], ports: [0] },
+    ])
+      expect((await post(bad)).status).toBe(400);
+  }, 30_000);
 });

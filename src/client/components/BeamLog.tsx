@@ -1,5 +1,4 @@
-import type { Result } from '../../shared/api';
-import { LOST, RETURNED } from '../../shared/beam';
+import { LOST, RETURNED, type BeamNote } from '../../shared/beam';
 import { fmtCount, lampShort } from '../lib/geometry';
 
 const outcomeLabel = (o: number) =>
@@ -14,8 +13,15 @@ const verdict = (skill: number, before: number) => {
 };
 
 /** WordleBot for the fog: what each beam cleared, and what the expert would have lit. */
-export const BeamLog = ({ result, size }: { result: Result; size: number }) => {
-  const { notes, expertLine } = result;
+export const BeamLog = ({
+  notes,
+  expertLine,
+  size,
+}: {
+  notes: BeamNote[];
+  expertLine: number[];
+  size: number;
+}) => {
   const avg = notes.length
     ? Math.round(notes.reduce((a, n) => a + n.skill, 0) / notes.length)
     : 0;

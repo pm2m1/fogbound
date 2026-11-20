@@ -1,6 +1,7 @@
 import type {
   FireResponse,
   InitResponse,
+  PracticeLogResponse,
   PracticeResponse,
   ShareResponse,
   SubmitResponse,
@@ -56,4 +57,6 @@ export const api = {
   share: () => call<ShareResponse>('/api/share', {}),
   subscribe: () => call<{ ok: boolean }>('/api/subscribe', {}),
   practice: () => call<PracticeResponse>('/api/practice'),
+  practiceLog: (rocks: number[], ports: number[]) =>
+    call<PracticeLogResponse>('/api/practice/log', { rocks, ports }),
 };

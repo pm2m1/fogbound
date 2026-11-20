@@ -4,12 +4,13 @@ import type {
   ErrorResponse,
   FireResponse,
   InitResponse,
+  PracticeLogResponse,
   PracticeResponse,
   Result,
   ShareResponse,
   SubmitResponse,
 } from '../../shared/api';
-import { analyzeShots, buildSpace } from '../../shared/beam';
+import { analyzeShots, buildSpace, trace } from '../../shared/beam';
 import { todayIndex } from '../../shared/day';
 import {
   countWrong,
@@ -294,6 +295,35 @@ api.get('/practice', (c) =>
     };
   })
 );
+
+/** Grades a finished practice fog the same way the daily beam log does. */
+api.post('/practice/log', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as {
+    rocks?: unknown;
+    ports?: unknown;
+  } | null;
+  const rocks = body?.rocks;
+  const ports = body?.ports;
+  const k = Array.isArray(rocks) ? rocks.length : 0;
+  if (
+    (k !== 3 && k !== 4) ||
+    !validBuoys(rocks, k) ||
+    !Array.isArray(ports) ||
+    ports.length === 0 ||
+    ports.length > 64 ||
+    !ports.every(validPort) ||
+    new Set(ports).size !== ports.length
+  )
+    return c.json(fail('Bad practice log request'), 400);
+  return handle(c, async (): Promise<PracticeLogResponse> => {
+    const shots = (ports as number[]).map((port) => ({
+      port,
+      outcome: trace(port, rocks as number[]),
+      borrowed: false,
+    }));
+    return { type: 'practice-log', notes: analyzeShots(buildSpace(k), shots) };
+  });
+});
 
 api.post('/share', async (c) => {
   const { postId, userId } = context;
