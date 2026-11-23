@@ -167,7 +167,7 @@ export const ResultCard = ({
         {borrowed ? ` · ${borrowed} borrowed` : ''}
         {stats.players > 0 &&
           ` · ${perfectPct}% of ${stats.players.toLocaleString()} ${stats.players === 1 ? 'player' : 'players'} found every rock`}
-        {me && me.streak > 0 && ` · 🔥 ${me.streak}`}
+        {me && me.streak > 0 && ` · 🔥 ${me.streak}-day streak`}
       </p>
       {result.ranked && result.guidedToday === 0 && (
         <p className="result-tip">
