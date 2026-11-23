@@ -30,7 +30,7 @@ export const BeamLog = ({
     <div className="beamlog" style={{ width: size, height: size }}>
       <div className="beamlog-head">
         <span>
-          Skill <b>{avg}</b>
+          Beam quality <b>{avg}</b>/100
         </span>
         <span>
           {fmtCount(notes[0]?.before ?? 0)} layouts →{' '}

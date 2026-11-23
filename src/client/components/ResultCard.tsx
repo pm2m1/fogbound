@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { DayStats, MyProfile, Result } from '../../shared/api';
 import { formatCountdown } from '../../shared/day';
-import { fmtHalf } from '../../shared/puzzle';
+import { fmtHalf, STARS_RULE } from '../../shared/puzzle';
 import { api } from '../lib/api';
 
 /** flip to true once the app is approved and user actions run as the player */
@@ -62,6 +62,8 @@ export const ResultCard = ({
   const perfectPct = stats.players
     ? Math.round((100 * stats.perfect) / stats.players)
     : 0;
+  // nobody else to compare with yet: celebrate instead of showing 0%
+  const alone = stats.players <= 1;
   const fired = result.shots.filter((s) => !s.borrowed).length;
   const borrowed = result.shots.length - fired;
   const sub = subredditName() ?? (onReddit() ? undefined : 'Fogbound');
@@ -134,6 +136,7 @@ export const ResultCard = ({
         </div>
         <h2 id="result-title">{headline}</h2>
       </div>
+      <p className="stars-rule">{STARS_RULE}</p>
 
       <div className="numbers">
         <div>
@@ -141,8 +144,14 @@ export const ResultCard = ({
           <span>score · par {par}</span>
         </div>
         <div>
-          <b>{result.ranked ? `${result.beatPct}%` : '—'}</b>
-          <span>{result.ranked ? 'of players beaten' : 'practice'}</span>
+          <b>{!result.ranked ? '—' : alone ? '1st' : `${result.beatPct}%`}</b>
+          <span>
+            {!result.ranked
+              ? 'practice'
+              : alone
+                ? 'to finish tonight'
+                : 'of players beaten'}
+          </span>
         </div>
         <div>
           <b>{result.guidedToday}</b>

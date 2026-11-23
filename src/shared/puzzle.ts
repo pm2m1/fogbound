@@ -97,6 +97,9 @@ export const countWrong = (
 ): number => buoys.filter((b) => !rocks.includes(b)).length;
 
 /** 3 = charted every rock at or under par · 2 = within 3 of par · 1 = every rock · 0 = shipwreck */
+/** Shown wherever stars appear, so the rule is never a mystery. */
+export const STARS_RULE = '★★★ par or better · ★★ within 3 · ★ all rocks found';
+
 export const starsFor = (
   wrong: number,
   beamsHalf: number,

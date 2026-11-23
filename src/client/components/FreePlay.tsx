@@ -10,7 +10,13 @@ import {
   totalCharts,
   trace,
 } from '../../shared/beam';
-import { countWrong, fmtHalf, scoreHalf, starsFor } from '../../shared/puzzle';
+import {
+  STARS_RULE,
+  countWrong,
+  fmtHalf,
+  scoreHalf,
+  starsFor,
+} from '../../shared/puzzle';
 import { api } from '../lib/api';
 import { fmtCount, lampShort } from '../lib/geometry';
 import { journey } from '../lib/platform';
@@ -378,6 +384,7 @@ export const FreePlay = ({
             ))}
           </div>
         )}
+        {done && <p className="stars-rule">{STARS_RULE}</p>}
         <div className="actions">
           {done ? (
             <>
