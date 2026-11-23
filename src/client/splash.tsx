@@ -28,15 +28,15 @@ const News = ({ data }: { data: InitResponse }) => {
   if (lit > 0) {
     return (
       <p className="news">
-        <b>{lit}</b> lamp{lit === 1 ? ' is' : 's are'} burning on the shore.
-        Borrow a beam, or light your own.
+        <b>{lit}</b> lamp{lit === 1 ? ' is' : 's are'} already lit. Reuse one
+        for ½, or light your own.
       </p>
     );
   }
   return (
     <p className="news">
-      The shore is dark. <b>Light the first lamp</b>. Anyone who borrows it is
-      credited to you.
+      The shore is dark. <b>Light the first lamp</b>: others can reuse your
+      beams for half price, and every reuse counts for you.
     </p>
   );
 };

@@ -171,7 +171,8 @@ export const ResultCard = ({
       </p>
       {result.ranked && result.guidedToday === 0 && (
         <p className="result-tip">
-          Light a lamp early tomorrow. Anyone who borrows it is credited to you.
+          Play early tomorrow: others can reuse your beams for half price, and
+          every reuse counts for you.
         </p>
       )}
 

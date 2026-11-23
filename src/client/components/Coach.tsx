@@ -94,8 +94,9 @@ export const Coach = ({
         </Mini>
       </div>
       <p className="coach-econ">
-        Your lamp costs <b>1</b>. Lamps other players lit glow amber. Borrow
-        their beam for <b>½</b> and they earn the credit.
+        Your lamp costs <b>1</b>. Lamps other players lit glow amber: borrow one
+        to reuse their beam for <b>½</b>, and they get the credit. Lamps are
+        named like chess squares: <b>S3</b> is the 3rd lamp on the bottom.
       </p>
       <div className="actions">
         <button className="btn btn-ghost" onClick={onPractice}>

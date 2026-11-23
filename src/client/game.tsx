@@ -36,7 +36,7 @@ import { Tutorial } from './components/Tutorial';
 import { FreePlay } from './components/FreePlay';
 import { ResultCard } from './components/ResultCard';
 import { ApiError, api } from './lib/api';
-import { fmtCount, lampShort } from './lib/geometry';
+import { fmtCount, lampSaid } from './lib/geometry';
 import { askLogin, journey, onReddit, toast } from './lib/platform';
 
 const SEEN_KEY = 'fogbound.practice.v1';
@@ -99,14 +99,14 @@ const outcomeText = (o: number) =>
     ? 'hits a rock'
     : o === RETURNED
       ? 'comes back'
-      : `exits at ${lampShort(o)}`;
+      : `exits at ${lampSaid(o)}`;
 
 const explain = (port: number, outcome: number, pair: number): string => {
   if (outcome === LOST) return 'Hit a rock.';
   if (outcome === RETURNED) return 'It came straight back.';
   if (outcome === opposite(port))
     return `Beam ${pair} came out straight across.`;
-  return `Beam ${pair} bent and came out at ${lampShort(outcome)}.`;
+  return `Beam ${pair} bent and came out at ${lampSaid(outcome)}.`;
 };
 
 type Phase = { kind: 'play' } | { kind: 'done'; result: Result };
@@ -199,7 +199,7 @@ const Game = ({ data }: { data: InitResponse }) => {
         const hyp = trace(p, buoys);
         setNote(
           hyp === fired.outcome
-            ? `Your buoys explain ${lampShort(p)}.`
+            ? `Your buoys explain ${lampSaid(p)}.`
             : `With your buoys it ${outcomeText(hyp)}. Really it ${outcomeText(fired.outcome)}.`
         );
         return;
@@ -209,7 +209,7 @@ const Game = ({ data }: { data: InitResponse }) => {
         setSelected(null);
         setNote(
           mk.kind === 'pair'
-            ? `Already fired: beam ${mk.pair} links to ${lampShort(mk.partner!)}.`
+            ? `Already fired: beam ${mk.pair} links to ${lampSaid(mk.partner!)}.`
             : 'Already fired.'
         );
         return;
@@ -337,7 +337,7 @@ const Game = ({ data }: { data: InitResponse }) => {
     if (note) return note;
     if (selected !== null) {
       if (canBorrow)
-        return `u/${selLamp!.by} lit this. Borrow for ½ or fire your own for 1.`;
+        return `u/${selLamp!.by} lit this. Borrow it to reuse their beam for ½ (they get the credit), or fire your own for 1.`;
       return 'Tap Fire to send the beam.';
     }
     if (shots.length === 0) return 'Tap a lamp to aim a beam into the fog.';

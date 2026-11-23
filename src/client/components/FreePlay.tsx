@@ -18,7 +18,7 @@ import {
   starsFor,
 } from '../../shared/puzzle';
 import { api } from '../lib/api';
-import { fmtCount, lampShort } from '../lib/geometry';
+import { fmtCount, lampSaid } from '../lib/geometry';
 import { journey } from '../lib/platform';
 import { Bay, markersFor, type Flash } from './Bay';
 import { BoardFrame } from './BoardFrame';
@@ -37,7 +37,7 @@ const outcomeText = (o: number) =>
     ? 'Hit a rock.'
     : o === RETURNED
       ? 'Came straight back.'
-      : `Came out at ${lampShort(o)}.`;
+      : `Came out at ${lampSaid(o)}.`;
 
 /**
  * Unlimited practice fogs: unranked, played entirely on the device. They never touch
@@ -151,7 +151,7 @@ export const FreePlay = ({
       const hyp = trace(p, buoys);
       setNote(
         hyp === fired.outcome
-          ? `Your buoys explain ${lampShort(p)}.`
+          ? `Your buoys explain ${lampSaid(p)}.`
           : `Your buoys: ${outcomeText(hyp).toLowerCase()} Really: ${outcomeText(fired.outcome).toLowerCase()}`
       );
       return;

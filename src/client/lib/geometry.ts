@@ -46,6 +46,15 @@ export const PAIR_COLORS = [
 export const lampShort = (port: number): string =>
   `${'NESW'[Math.floor(port / N)]!}${(port % N) + 1}`;
 
+const SIDE_WORD = ['top', 'right', 'bottom', 'left'] as const;
+
+/**
+ * Chess-style lamp code plus its plain reading, e.g. "E8 (right 8)".
+ * Top/bottom lamps count left to right, left/right lamps count top to bottom.
+ */
+export const lampSaid = (port: number): string =>
+  `${lampShort(port)} (${SIDE_WORD[Math.floor(port / N)]} ${(port % N) + 1})`;
+
 export const fmtCount = (n: number): string =>
   n >= 100_000
     ? `${Math.round(n / 1000)}k`

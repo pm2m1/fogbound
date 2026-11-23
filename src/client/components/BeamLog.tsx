@@ -38,7 +38,9 @@ export const BeamLog = ({
         </span>
       </div>
       <p className="beamlog-explain">
-        Each beam narrows where the rocks can be. Bigger drops, better beams.
+        Lamps read like chess squares: N, E, S, W is the top, right, bottom or
+        left side; 1–8 counts left to right, or top to bottom. Bigger drops in
+        layouts mean better beams.
       </p>
       <ol className="beamlog-list">
         {notes.map((n, i) => (
